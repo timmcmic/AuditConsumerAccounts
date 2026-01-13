@@ -33,7 +33,7 @@ Copyright = '(c) 2021 CSS Support. All rights reserved.'
 Description = 'This module audits registered domains and addresses from EntraID for Microsoft Consumer Accounts.'
 
 # Minimum version of the PowerShell engine required by this module
-# PowerShellVersion = ''
+PowerShellVersion = '7.5'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
@@ -59,6 +59,7 @@ RequiredModules = @(
     @{ModuleName = 'Microsoft.Graph.Identity.DirectoryManagement' ; ModuleVersion = '2.32.0'}
     @{ModuleName = 'PSWriteHTML' ; ModuleVersion = '1.39.0' }
     @{ModuleName = 'PowerShellGet'; ModuleVersion = '2.2.5'}
+    @{ModuleName = 'MSIdentityTools '; ModuleVersion = '2.7.0'}
 )
 
 # Assemblies that must be loaded prior to importing this module

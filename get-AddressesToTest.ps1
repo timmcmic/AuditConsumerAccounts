@@ -17,6 +17,7 @@ function get-AddressesToTest
     $returnListCountSorted = 0
 
     $testString = "smtp:"
+    $guestString = "#EXT#@"
 
     #Iterate through each address and ensure that each address is an SMTP address an that it is at a domain that is verified in the tenant.
 
@@ -25,10 +26,17 @@ function get-AddressesToTest
         out-logfile -string ("Processing user: "+$user.Id)
         out-logfile -string ("Processing UPN: "+$user.userPrincipalName)
 
-        $outputObject = New-Object PSObject -Property @{
+        if ($user.userPrincipalName.contains($guestString))
+        {
+            out-logfile -string "Skipping UPN evaluate as adddress as it is a guest account."
+        }
+        else 
+        {
+             $outputObject = New-Object PSObject -Property @{
                     ID = $user.id
                     UPN = $user.userPrincipalName
                     Address = $user.userPrincipalName
+            }
         }
 
         $returnList.add($outputObject) | Out-Null
@@ -71,6 +79,9 @@ function get-AddressesToTest
 
     $returnListCountSorted = $returnList.count
 
+    out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
     out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
     out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
+
+    return $returnList
 }

@@ -129,10 +129,13 @@ function Start-AuditConsumerAccounts
     $powershellModules['Directory']="Microsoft.Graph.Identity.DirectoryManagement"
     $powershellModules['Telemetry']="TelemetryHelper"
     $powershellModules['HTML']="PSWriteHTML"
+    $powershellModules['Identity']="MSIdentityTools"
+
 
     #Create the telemetry values hash table.
 
     $telemetryValues = @{}
+    $telemetryValues['telemetryMSIdentityTools']="None"
     $telemetryValues['telemetryMSGraphAuthentication']="None"
     $telemetryValues['telemetryMSGraphUsers']="None"
     $telemetryValues['telemetryMSGraphDirectory']="None"
@@ -183,6 +186,7 @@ function Start-AuditConsumerAccounts
     $userList
     $domainsList
     $addressesToTest
+    $consumerAccountList
 
     #Start the log file.
 
@@ -197,6 +201,7 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
     $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
     $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
     $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
     $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
@@ -229,4 +234,8 @@ function Start-AuditConsumerAccounts
     $htmlValues['htmlAddressesToTest']=Get-Date
 
     $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList
+
+    $htmlValues['htmlConsumerAccountTest']=Get-Date
+
+    $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
 }
