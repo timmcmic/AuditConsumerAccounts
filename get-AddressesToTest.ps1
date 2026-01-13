@@ -22,10 +22,18 @@ function get-AddressesToTest
 
     #Iterate through each address and ensure that each address is an SMTP address an that it is at a domain that is verified in the tenant.
 
+    $ProgressDelta = 100/($userList.count); $PercentComplete = 0; $MbxNumber = 0
+
     foreach ($user in $userList)
     {
+        $MbxNumber++
+
         out-logfile -string ("Processing user: "+$user.Id)
         out-logfile -string ("Processing UPN: "+$user.userPrincipalName)
+
+        write-progress -activity "Processing Recipient" -status $user.userPrincipalName -PercentComplete $PercentComplete
+
+        $PercentComplete += $ProgressDelta
 
         if ($user.userPrincipalName.contains($guestString))
         {
@@ -70,6 +78,8 @@ function get-AddressesToTest
                 }
             }
         }
+
+        write-progress -activity "Processing Recipient" -completed
     }
 
     $returnListCount = $returnList.Count

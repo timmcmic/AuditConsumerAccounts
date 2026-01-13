@@ -15,9 +15,17 @@ function get-ConsumerAccounts
 
     #Interate through each of the accounts and test for a consumer account.
 
+    $ProgressDelta = 100/($accountList.count); $PercentComplete = 0; $MbxNumber = 0
+
     foreach ($account in $accountList)
     {
+        $MbxNumber++
+
         out-logfile -string ("Testing consumer account for: "+$account.address)
+
+        write-progress -activity "Processing Recipient" -status $account.userPrincipalName -PercentComplete $PercentComplete
+
+        $PercentComplete += $ProgressDelta
 
         try {
             $test = get-msIdHasMicrosoftAccount -mail $account.Address -ErrorAction STOP
