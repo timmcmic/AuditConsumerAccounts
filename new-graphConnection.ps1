@@ -43,7 +43,7 @@ function New-GraphConnection
             out-logfile -string "Entering graph certificate authentication."
 
             try {
-                connect-mgGraph -tenantID $graphHasTable.msGraphTenantID -ClientId $graphHastTable.msGraphApplicationID -CertificateThumbprint $graphHashTable.msGraphCertificateThumbprint -Environment $graphHashTable.msGraphEnvironmentName -errorAction Stop
+                connect-mgGraph -tenantID $graphHashTable.msGraphTenantID -ClientId $graphHashTable.msGraphApplicationID -CertificateThumbprint $graphHashTable.msGraphCertificateThumbprint -Environment $graphHashTable.msGraphEnvironmentName -errorAction Stop
             }
             catch {
                 out-logfile -string "Graph authentication failed."
