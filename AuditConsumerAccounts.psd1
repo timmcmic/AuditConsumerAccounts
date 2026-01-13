@@ -59,7 +59,6 @@ RequiredModules = @(
     @{ModuleName = 'Microsoft.Graph.Identity.DirectoryManagement' ; ModuleVersion = '2.32.0'}
     @{ModuleName = 'PSWriteHTML' ; ModuleVersion = '1.39.0' }
     @{ModuleName = 'PowerShellGet'; ModuleVersion = '2.2.5'}
-    @{ModuleName = 'MSIdentityTools '; ModuleVersion = '2.7.0'}
 )
 
 # Assemblies that must be loaded prior to importing this module

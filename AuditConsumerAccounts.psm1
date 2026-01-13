@@ -170,6 +170,7 @@ function Start-AuditConsumerAccounts
     $exportNames = @{}
     $exportNames['usersXML']="UsersXML"
     $exportNames['domainsCSV']="DomainsCSV"
+    $exportNames['addressesToTextXML']="AddressToTestXML"
 
     #Set the execution windows name.
 
@@ -223,6 +224,8 @@ function Start-AuditConsumerAccounts
 
     $userList = get-MSGraphUsers
 
+    out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
+
     $htmlValues['htmlGetMSGraphDomains']=Get-Date
 
     out-logfile -string "Obtain all domains from entra id."
@@ -234,6 +237,8 @@ function Start-AuditConsumerAccounts
     $htmlValues['htmlAddressesToTest']=Get-Date
 
     $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList
+
+    out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 

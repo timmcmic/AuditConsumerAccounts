@@ -39,6 +39,7 @@ Function Test-PowershellModule
 
     if ($commandsArray.count -eq 0)
     {
+        out-logfile -string ("Missing powershell module: "+$powershellModuleName)
         Out-LogFile -string "The powershell module was not found and is required for script functionality." -iserror:$TRUE
     }
     else
