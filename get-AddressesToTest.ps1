@@ -17,6 +17,7 @@ function get-AddressesToTest
     $returnListCountSorted = 0
 
     $testString = "smtp:"
+    $teststring2 = "SMTP:"
     $guestString = "#EXT#@"
 
     #Iterate through each address and ensure that each address is an SMTP address an that it is at a domain that is verified in the tenant.
@@ -43,7 +44,7 @@ function get-AddressesToTest
 
         foreach ($address in $user.proxyAddresses)
         {
-            if ($address.startsWith($testString))
+            if (($address.startsWith($testString)) -or ($address.startsWith($testString2)))
             {
                 out-logfile -string $address
                 $tempAddress = $address.subString(5)

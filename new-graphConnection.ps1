@@ -28,17 +28,30 @@ function New-GraphConnection
             try 
             {
                 connect-mgGraph -tenantID $graphHashTable.msGraphTenantID -scopes $msGraphScopesRequired -Environment $graphHashTable.msGraphEnvironmentName -errorAction Stop
-                out-logfile -string "Graph authentication successful."
             }
             catch 
             {
                 out-logfile -string "Graph authentication failed."
                 out-logfile -string $_ -isError:$TRUE
             }
+
+            out-logfile -string "Graph authentication successful."
+
         }
         $msGraphCertificate 
         {  
             out-logfile -string "Entering graph certificate authentication."
+
+            try {
+                connect-mgGraph -tenantID $graphHasTable.msGraphTenantID -ClientId $graphHastTable.msGraphApplicationID -CertificateThumbprint $graphHashTable.msGraphCertificateThumbprint -Environment $graphHashTable.msGraphEnvironmentName -errorAction Stop
+            }
+            catch {
+                out-logfile -string "Graph authentication failed."
+                out-logfile -string $_ -isError:$TRUE
+            }
+
+            out-logfile -string "Graph authentication successful."
+
         }
         $msGraphClientSecret 
         {  

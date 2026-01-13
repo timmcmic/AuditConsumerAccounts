@@ -11,7 +11,7 @@ function Get-MSGraphUsers
 
         #$userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses)
 
-        $userList = [System.Collections.Generic.List[Object]]::new
+        $userList = [System.Collections.Generic.List[Object]]::new()
         $user = get-MGUser -userID "tim@e-mcmichael.com" -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses
         $userList.add($user)
         $user = get-MGUser -userID "amy@e-mcmichael.com" -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses

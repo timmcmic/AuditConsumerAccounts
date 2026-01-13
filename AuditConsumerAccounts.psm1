@@ -109,8 +109,6 @@ function Start-AuditConsumerAccounts
         [boolean]$allowTelemetryCollection=$TRUE
     )
 
-    $htmlStartTime = get-date #Audting timeline start.
-
     #Initialize telemetry collection.
 
     $appInsightAPIKey = "63d673af-33f4-401c-931e-f0b64a218d89"
@@ -130,11 +128,13 @@ function Start-AuditConsumerAccounts
     $powershellModules['Telemetry']="TelemetryHelper"
     $powershellModules['HTML']="PSWriteHTML"
     $powershellModules['Identity']="MSIdentityTools"
+    $powershellModules['AuditConsumerAccounts']="AuditConsumerAccounts"
 
 
     #Create the telemetry values hash table.
 
     $telemetryValues = @{}
+    $telemetryValues['telemetryAuditConsumerAccounts']="None"
     $telemetryValues['telemetryMSIdentityTools']="None"
     $telemetryValues['telemetryMSGraphAuthentication']="None"
     $telemetryValues['telemetryMSGraphUsers']="None"
@@ -168,9 +168,10 @@ function Start-AuditConsumerAccounts
     #Create export table
 
     $exportNames = @{}
-    $exportNames['usersXML']="UsersXML"
-    $exportNames['domainsCSV']="DomainsCSV"
-    $exportNames['addressesToTextXML']="AddressToTestXML"
+    $exportNames['usersXML']="-UsersXML"
+    $exportNames['domainsCSV']="-DomainsCSV"
+    $exportNames['addressesToTextXML']="-AddressToTestXML"
+    $exportNames['consumerAccountsXML']="-ConsumerAccounts"
 
     #Set the execution windows name.
 
@@ -203,6 +204,7 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
     $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
     $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryAuditConsumerAccounts']=Test-PowerShellModule -powershellModuleName $powershellModules.AuditConsumerAccounts -powershellVersionTest:$TRUE
     $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
     $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
@@ -243,4 +245,51 @@ function Start-AuditConsumerAccounts
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
     $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+
+    out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+
+    $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
+    $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
+    $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]$consumerAccountList.Count
+    $telemetryValues['telemetryEndTime']=(Get-UniversalDateTime)
+    $telemetryValues['telemetryElapsedSeconds']=[double](Get-ElapsedTime -startTime $telemetryValues['telemetryStartTime'] -endTime  $telemetryValues['telemetryEndTime'])
+
+    $htmlValues['htmlEndTime']=Get-Date
+
+    generate-htmlFile -htmlTime $htmlValues -accounts $consumerAccountList
+
+    if ($allowTelemetryCollection -eq $TRUE)
+    {
+        $telemetryEventProperties = @{
+            AuditConsumerAccountsCommand = $telemetryValues.telemetryEventName
+            AuditConsumerAccountCommandVersion = $telemetryValues.telemetryAuditConsumerAccounts
+            MSGraphAuthentication = $telemetryValues.telemetryMSGraphAuthentication
+            MSGraphUsers = $telemetryValues.telemetryMSGraphUsers
+            MSGraphDirectory = $telemetryValues.telemetryMSGraptelemetryMSGraphDirectory
+            MSIdentityTools = $telemetryValues.telemetryMSIdentityTools
+            OSVersion = $telemetryValues.telemetryOSVersion
+            MigrationStartTimeUTC = $telemetryValues.telemetryStartTime
+            MigrationEndTimeUTC = $telemetryValues.telemetryEndTime
+        }
+
+        $telemetryEventMetrics = @{
+                MigrationElapsedSeconds = $telemetryValues.telemetryElapsedSeconds
+                NumberOfUsers = $telemetryValues.telemetryNumberOfUsers
+                NumberOfAddresses = $telemetryValues.telemetryNumberofAddresses
+                NumberOfConsumerAccounts = $telemetryValues.telemetryNumberOfConsumerAccounts
+        }
+    }
+
+    if ($allowTelemetryCollection -eq $TRUE)
+    {
+        out-logfile -string "Telemetry1"
+        out-logfile -string $traceModuleName
+        out-logfile -string "Telemetry2"
+        out-logfile -string $telemetryValues.telemetryEventName
+        out-logfile -string "Telemetry3"
+        out-logfile -string $telemetryEventMetrics
+        out-logfile -string "Telemetry4"
+        out-logfile -string $telemetryEventProperties
+        send-TelemetryEvent -traceModuleName $traceModuleName -eventName $telemetryValues.telemetryEventName -eventMetrics $telemetryEventMetrics -eventProperties $telemetryEventProperties
+    }
 }

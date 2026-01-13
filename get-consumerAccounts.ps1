@@ -6,7 +6,7 @@ function get-ConsumerAccounts
         $accountList
     )
 
-    out-logfile -string "Being Get-ConsumerAccounts"
+    out-logfile -string "Begin Get-ConsumerAccounts"
 
     #Create return list.
 
@@ -40,6 +40,10 @@ function get-ConsumerAccounts
             out-logfile -string "A consumer account is not present."
         }
     }
+
+    out-logfile -string ("Count of consumer accounts located: "+$returnList.Count)
+
+    out-logfile -string "End Get-ConsumerAccounts"
 
     return $returnList
 }
