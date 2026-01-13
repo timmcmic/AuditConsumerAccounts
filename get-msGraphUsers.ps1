@@ -9,7 +9,7 @@ function Get-MSGraphUsers
     try {
         out-logfile -string "Using graph call to obtain all users."
 
-        $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -errorAction Stop | Select-Object $propertiesToObtain)
+        $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -errorAction Stop | Select-Object userPrincipalName,proxyAddresses)
 
         out-logfile -string "Graph call to obtain users successful."
     }
