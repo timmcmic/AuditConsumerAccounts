@@ -2,14 +2,14 @@ function Get-MSGraphUsers
 {
     #Declare local variables.
 
-    $propertiesToObtain="UserPricipalName,ProxyAddresses"
+    $propertiesToObtain="UserPrincipalName,ProxyAddresses"
 
     out-logfile -string "Begin Get-MSGraphUsers"
 
     try {
         out-logfile -string "Using graph call to obtain all users."
 
-        $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -errorAction Stop)
+        $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -errorAction Stop | Select-Object $propertiesToObtain)
 
         out-logfile -string "Graph call to obtain users successful."
     }

@@ -10,7 +10,7 @@ Function Out-XMLFile
         [string]$itemNameToExport
     )
 
-    Out-LogFile -string "Beging Out-XMLFile"
+    Out-LogFile -string "Begin Out-XMLFile"
 
     #Declare function variables.
 
