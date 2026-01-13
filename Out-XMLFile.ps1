@@ -27,5 +27,5 @@ Function Out-XMLFile
         throw $_
     }
 
-    Out-LogFile -string "End Out-LogFile"
+    Out-LogFile -string "End Out-XMLFile"
 }
