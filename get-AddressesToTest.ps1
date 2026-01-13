@@ -50,36 +50,39 @@ function get-AddressesToTest
 
         $returnList.add($outputObject) | Out-Null
 
-        $ProgressDeltaAddress = 100/($user.proxyAddresses.count); $PercentCompleteAddress = 0; $AddressCount = 0
-
-        foreach ($address in $user.proxyAddresses)
+        if ($user.proxyAddresses.count -gt 0)
         {
-            $AddressCount++
+            $ProgressDeltaAddress = 100/($user.proxyAddresses.count); $PercentCompleteAddress = 0; $AddressCount = 0
 
-            Write-Progress -Activity "Processing address" -Status $address -PercentComplete $PercentCompleteAddress -id 2 -ParentId 1
-
-            $PercentCompleteAddress += $ProgressDeltaAddress
-
-            if (($address.startsWith($testString)) -or ($address.startsWith($testString2)))
+            foreach ($address in $user.proxyAddresses)
             {
-                $tempAddress = $address.subString(5)
-                $tempDomain = $tempAddress.split("@")
+                $AddressCount++
 
-                if ($domainslist.Id.contains($tempDomain[1]))
+                Write-Progress -Activity "Processing address" -Status $address -PercentComplete $PercentCompleteAddress -id 2 -ParentId 1
+
+                $PercentCompleteAddress += $ProgressDeltaAddress
+
+                if (($address.startsWith($testString)) -or ($address.startsWith($testString2)))
                 {
-                    out-logfile -string "Address is valid to test."
+                    $tempAddress = $address.subString(5)
+                    $tempDomain = $tempAddress.split("@")
 
-                    $outputObject = New-Object PSObject -Property @{
-                        ID = $user.id
-                        UPN = $user.userPrincipalName
-                        Address = $tempAddress
+                    if ($domainslist.Id.contains($tempDomain[1]))
+                    {
+                        out-logfile -string "Address is valid to test."
+
+                        $outputObject = New-Object PSObject -Property @{
+                            ID = $user.id
+                            UPN = $user.userPrincipalName
+                            Address = $tempAddress
+                        }
+
+                        $returnList.add($outputObject)
                     }
-
-                    $returnList.add($outputObject)
-                }
-                else 
-                {
-                    out-logfile -string "Address is not valid to test."
+                    else 
+                    {
+                        out-logfile -string "Address is not valid to test."
+                    }
                 }
             }
         }
