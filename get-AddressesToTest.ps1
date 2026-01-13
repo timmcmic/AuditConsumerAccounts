@@ -78,9 +78,9 @@ function get-AddressesToTest
                 }
             }
         }
-
-        write-progress -activity "Processing Recipient" -completed
     }
+
+    write-progress -activity "Processing Recipient" -completed
 
     $returnListCount = $returnList.Count
 

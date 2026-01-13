@@ -49,6 +49,8 @@ function get-ConsumerAccounts
         }
     }
 
+    write-progress -activity "Processing Recipient" -completed
+
     out-logfile -string ("Count of consumer accounts located: "+$returnList.Count)
 
     out-logfile -string "End Get-ConsumerAccounts"
