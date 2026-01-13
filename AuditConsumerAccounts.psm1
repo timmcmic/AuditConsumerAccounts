@@ -121,11 +121,21 @@ function Start-AuditConsumerAccounts
         start-telemetryConfiguration -allowTelemetryCollection $allowTelemetryCollection -appInsightAPIKey $appInsightAPIKey -traceModuleName $traceModuleName
     }
 
+    #Create powershell hash table.
+
+    $powershellModules = @{}
+    $powershellModules['Authentication']="Microsoft.Graph.Authentication"
+    $powershellModules['Users']="Microsoft.Graph.Users"
+    $powershellModules['Directory']="Microsoft.Graph.Identity.DirectoryManagement"
+    $powershellModules['Telemetry']="TelemetryHelper"
+    $powershellModules['HTML']="PSWriteHTML"
+
     #Create the telemetry values hash table.
 
     $telemetryValues = @{}
     $telemetryValues['telemetryMSGraphAuthentication']="None"
     $telemetryValues['telemetryMSGraphUsers']="None"
+    $telemetryValues['telemetryMSGraphDirectory']="None"
     $telemetryValues['telemetryOSVersion']="None"
     $telemetryValues['telemetryStartTime']=(get-UniversalDateTime)
     $telemetryValues['telemetryEndTime']="None"
@@ -146,6 +156,11 @@ function Start-AuditConsumerAccounts
     $msGraphValues['msGraphDomainPermissions']=$msGraphDomainPermissions
     $msGraphValues['msGraphUserPermissions']=$msGraphUserPermissions
     $msGraphValues['msGraphAuthenticationType']=$PSCmdlet.ParameterSetName
+
+    #Create HTML Table
+
+    $htmlValues = @{}
+    $htmlValues['htmlStartTime']=Get-Date
 
     #Set the execution windows name.
 
@@ -168,5 +183,11 @@ function Start-AuditConsumerAccounts
     out-logfile -string "BEGIN Start-AuditConsumerAccounts"
     out-logfile -string "==============================================================="
 
-    
+    $htmlValues['htmlStartPowershellValidation']=Get-Date
+
+    $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
+    $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
+    $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 }

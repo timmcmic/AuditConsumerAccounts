@@ -56,6 +56,7 @@ RequiredModules = @(
     @{ModuleName = 'TelemetryHelper'; ModuleVersion = '2.3.1'}
     @{ModuleName = 'Microsoft.Graph.Authentication' ; ModuleVersion = '2.32.0'}
     @{ModuleName = 'Microsoft.Graph.Users' ; ModuleVersion = '2.32.0'}
+    @{ModuleName = 'Microsoft.Graph.Identity.DirectoryManagement' ; ModuleVersion = '2.32.0'}
     @{ModuleName = 'PSWriteHTML' ; ModuleVersion = '1.39.0' }
     @{ModuleName = 'PowerShellGet'; ModuleVersion = '2.2.5'}
 )
@@ -73,7 +74,7 @@ RequiredModules = @(
 # FormatsToProcess = @()
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @('Write-FunctionParameters.ps1','Test-PowerShellVersion.ps1','Disable-AllPowershellSessions.ps1','Get-UniversalDateTime.ps1','New-LogFile.ps1','Out-LogFile.ps1','Start-TelemetryConfiguration.ps1')
+NestedModules = @('Write-FunctionParameters.ps1','Test-PowerShellModule.ps1','Disable-AllPowershellSessions.ps1','Get-UniversalDateTime.ps1','New-LogFile.ps1','Out-LogFile.ps1','Start-TelemetryConfiguration.ps1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @('Start-AuditConsumerAccounts')
