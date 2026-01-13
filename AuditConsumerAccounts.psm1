@@ -76,28 +76,28 @@ function Start-AuditConsumerAccounts
     (
         #Define Microsoft Graph Parameters
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
-        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [ValidateSet("China","Global","USGov","USGovDod")]
         [string]$msGraphEnvironmentName,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
-        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [string]$msGraphTenantID,
-        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [string]$msGraphCertificateThumbprint,
-        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [string]$msGraphApplicationID,
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]        
         [string]$msGraphClientSecret,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
-        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [ValidateSet("Domain.Read.All","Domain.ReadWrite.All")]        
         [string]$msGraphDomainPermissions,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
-        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
         [string]$msGraphUserPermissions,
@@ -174,6 +174,7 @@ function Start-AuditConsumerAccounts
     #Define local variables.
 
     [string]$logFileName = "AuditConsumerAccounts"
+    $userList
 
     #Start the log file.
 
@@ -190,4 +191,12 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
     $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
     $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
+
+    $htmlValues['htmlStartMSGraph']=Get-Date
+
+    out-logfile -string "Establish graph connection."
+
+    new-graphConnection -graphHashTable $msGraphValues
+
+    out-logfile -string "Verify graph connection."
 }

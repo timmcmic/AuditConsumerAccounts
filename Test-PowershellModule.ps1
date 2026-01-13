@@ -103,7 +103,7 @@
             }
         }
 
-        Out-LogFile -string "END Test-PowershellModule"
+        Out-LogFile -string "End Test-PowershellModule"
 
         return $commandsArray[0].version
     }

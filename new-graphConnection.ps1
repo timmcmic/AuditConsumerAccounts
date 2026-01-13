@@ -1,0 +1,69 @@
+<#
+    .SYNOPSIS
+
+    This function takes the graph hash table and creates the appropriate graph connection.
+
+    .DESCRIPTION
+
+    This function takes the graph hash table and creates the appropriate graph connection.
+
+    .PARAMETER graphHashTable
+
+    The has table of all the relevant graph information
+
+    #>
+
+function New-GraphConnection
+{
+    Param
+    (
+        [Parameter(Mandatory = $true)]
+        $graphHashTable
+    )
+
+    #Declare local variables.
+
+    $msGraphInteractive = "Interactive"
+    $msGraphCertificate = "Certificate"
+    $msGraphClientSecret = "ClientSecret"
+    $msGraphScopesRequired = $graphHashTable.msGraphDomainPermissions + "," + $graphHashTable.msGraphUserPermissions
+
+    out-logfile -string "Begin New-GraphConnection"
+
+    out-logfile -string "Create connection based on graph parameter set name."
+    out-logfile -string ("Authentication Type: "+$graphHashTable.msGraphAuthenticationType)
+    out-logfile -string ("Scopes Calculated: " +$msGraphScopesRequired)
+
+    switch ($graphHashTable.msGraphAuthenticationType) 
+    {
+        $msGraphInteractive 
+        {  
+            out-logfile -string "Entering graph interactive authentication."
+
+            try 
+            {
+                connect-mgGraph -tenantID $graphHashTable.msGraphTenantID -scopes $msGraphScopesRequired -Environment $graphHashTable.msGraphEnvironmentName -errorAction Stop
+                out-logfile -string "Graph authentication successful."
+            }
+            catch 
+            {
+                out-logfile -string "Graph authentication failed."
+                out-logfile -string $_ -isError:$TRUE
+            }
+        }
+        $msGraphCertificate 
+        {  
+            out-logfile -string "Entering graph certificate authentication."
+        }
+        $msGraphClientSecret 
+        {  
+            out-logfile -string "Entering graph client secret authentication."
+        }
+        Default 
+        {
+            out-logfile -string "You should have never ended up here - this is an issue - contact author." -isError:$TRUE
+        }
+    }
+
+    out-logfile -string "End New-GraphConnection"
+}
