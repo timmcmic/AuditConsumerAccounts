@@ -1,0 +1,172 @@
+#############################################################################################
+# DISCLAIMER:																				#
+#																							#
+# THE SAMPLE SCRIPTS ARE NOT SUPPORTED UNDER ANY MICROSOFT STANDARD SUPPORT					#
+# PROGRAM OR SERVICE. THE SAMPLE SCRIPTS ARE PROVIDED AS IS WITHOUT WARRANTY				#
+# OF ANY KIND. MICROSOFT FURTHER DISCLAIMS ALL IMPLIED WARRANTIES INCLUDING, WITHOUT		#
+# LIMITATION, ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR OF FITNESS FOR A PARTICULAR		#
+# PURPOSE. THE ENTIRE RISK ARISING OUT OF THE USE OR PERFORMANCE OF THE SAMPLE SCRIPTS		#
+# AND DOCUMENTATION REMAINS WITH YOU. IN NO EVENT SHALL MICROSOFT, ITS AUTHORS, OR			#
+# ANYONE ELSE INVOLVED IN THE CREATION, PRODUCTION, OR DELIVERY OF THE SCRIPTS BE LIABLE	#
+# FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF BUSINESS	#
+# PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, OR OTHER PECUNIARY LOSS)	#
+# ARISING OUT OF THE USE OF OR INABILITY TO USE THE SAMPLE SCRIPTS OR DOCUMENTATION,		#
+# EVEN IF MICROSOFT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES						#
+#############################################################################################
+
+function Start-AuditConsumerAccounts
+{
+    <#
+    .SYNOPSIS
+
+    This function begins the process of collecting information for the purposes of auditing consumer accounts in the Microsoft ecosystem based off domains and addresses in EntraID.
+
+    .DESCRIPTION
+
+    Trigger function.
+
+    .PARAMETER LOGFOLDERPATH
+
+    *REQUIRED*
+    This is the logging directory for storing the migration log and all backup XML files.
+    If running multiple SINGLE instance migrations use different logging directories.
+
+    .PARAMETER msGraphEnvironmentName
+
+    The MSGraph environment where to invoke commands.
+
+    .PARAMETER msGraphTenantID
+
+    The msGraphTenantID where the graph commands should be invoked.
+
+    .PARAMETER msGraphCertificateThumbprint
+
+    This is the graph certificate thumbprint with the associated app id.
+   
+    .OUTPUTS
+
+    Creates a CSV and HTML report of all consumer accounts located based off proxy addresses and UPNs in the EntraID environment
+
+    .NOTES
+
+    The following blog posts maintain documentation regarding this module.
+
+    https://timmcmic.wordpress.com.  
+
+    Refer to the first pinned blog post that is the table of contents.
+
+    
+    .EXAMPLE
+
+    Start-DistributionListMigration -groupSMTPAddress $groupSMTPAddress -globalCatalogServer server.domain.com -activeDirectoryCredential $cred -logfolderpath c:\temp -dnNoSyncOU "OU" -exchangeOnlineCredential $cred -azureADCredential $cred
+
+    .EXAMPLE
+
+    Start-DistributionListMigration -groupSMTPAddress $groupSMTPAddress -globalCatalogServer server.domain.com -activeDirectoryCredential $cred -logfolderpath c:\temp -dnNoSyncOU "OU" -exchangeOnlineCredential $cred -azureADCredential $cred -enableHybridMailFlow:$TRUE -triggerUpgradeToOffice365Group:$TRUE
+
+    .EXAMPLE
+
+    Start-DistributionListMigration -groupSMTPAddress $groupSMTPAddress -globalCatalogServer server.domain.com -activeDirectoryCredential $cred -logfolderpath c:\temp -dnNoSyncOU "OU" -exchangeOnlineCredential $cred -azureADCredential $cred -enableHybridMailFlow:$TRUE -triggerUpgradeToOffice365Group:$TRUE -useCollectedOnPremMailboxFolderPermissions:$TRUE -useCollectedOffice365MailboxFolderPermissions:$TRUE -useCollectedOnPremSendAs:$TRUE -useCollectedOnPremFullMailboxAccess:$TRUE -useCollectedOffice365FullMailboxAccess:$TRUE
+
+    #>
+
+     [cmdletbinding()]
+
+    Param
+    (
+        #Define Microsoft Graph Parameters
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [ValidateSet("China","Global","USGov","USGovDod")]
+        [string]$msGraphEnvironmentName,
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [string]$msGraphTenantID,
+        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [string]$msGraphCertificateThumbprint,
+        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [string]$msGraphApplicationID,
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]        
+        [string]$msGraphClientSecret,
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [ValidateSet("Domain.Read.All","Domain.ReadWrite.All")]        
+        [string]$msGraphDomainPermissions,
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "CertificateAuthentication")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
+        [string]$msGraphUserPermissions,
+        #Define other mandatory parameters
+        [Parameter(Mandatory = $true)]
+        [string]$logFolderPath,
+        #Define telemetry parameters
+        [Parameter(Mandatory = $false)]
+        [boolean]$allowTelemetryCollection=$TRUE
+    )
+
+    $htmlStartTime = get-date #Audting timeline start.
+
+    #Initialize telemetry collection.
+
+    $appInsightAPIKey = "63d673af-33f4-401c-931e-f0b64a218d89"
+    $traceModuleName = "AuditConsumerAccounts"
+
+    if ($allowTelemetryCollection -eq $TRUE)
+    {
+        start-telemetryConfiguration -allowTelemetryCollection $allowTelemetryCollection -appInsightAPIKey $appInsightAPIKey -traceModuleName $traceModuleName
+    }
+
+    #Create the telemetry values hash table.
+
+    $telemetryValues = @{}
+    $telemetryValues['telemetryMSGraphAuthentication']="None"
+    $telemetryValues['telemetryMSGraphUsers']="None"
+    $telemetryValues['telemetryOSVersion']="None"
+    $telemetryValues['telemetryStartTime']=(get-UniversalDateTime)
+    $telemetryValues['telemetryEndTime']="None"
+    $telemetryValues['telemetryElapsedSeconds']=[double]0
+    $telemetryValues['telemetryEventName']="Start-AuditConsumerAccounts"
+    $telemetryValues['telemetryNumberOfUsers']=[double]0
+    $telemetryValues['telemetryNumberofAddresses']=[double]0
+    $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]0
+
+    #Create MSGraphHashTable
+
+    $msGraphValues = @{}
+    $msGraphValues['msGraphEnvironmentName']=$msGraphEnvironmentName
+    $msGraphValues['msGraphTenantID']=$msGraphTenantID
+    $msGraphValues['msGraphApplicationID']=$msGraphApplicationID
+    $msGraphValues['msGraphCertificateThumbprint']=$msGraphCertificateThumbprint
+    $msGraphValues['msGraphClientSecret']=$msGraphClientSecret
+    $msGraphValues['msGraphDomainPermissions']=$msGraphDomainPermissions
+    $msGraphValues['msGraphUserPermissions']=$msGraphUserPermissions
+    $msGraphValues['msGraphAuthenticationType']=$PSCmdlet.ParameterSetName
+
+    #Set the execution windows name.
+
+    $windowTitle = "Start-AuditConsumerAccounts"
+    $host.ui.RawUI.WindowTitle = $windowTitle
+
+    #Define global variables.
+
+    [string]$global:staticFolderName="\AuditConsumerAccounts\"
+
+    #Define local variables.
+
+    [string]$logFileName = "AuditConsumerAccounts"
+
+    #Start the log file.
+
+    new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
+
+    out-logfile -string "==============================================================="
+    out-logfile -string "BEGIN Start-AuditConsumerAccounts"
+    out-logfile -string "==============================================================="
+
+    
+}
