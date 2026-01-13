@@ -162,6 +162,11 @@ function Start-AuditConsumerAccounts
     $htmlValues = @{}
     $htmlValues['htmlStartTime']=Get-Date
 
+    #Create export table
+
+    $exportNames = @{}
+    $exportNames['usersXML']="UsersXML"
+
     #Set the execution windows name.
 
     $windowTitle = "Start-AuditConsumerAccounts"
@@ -198,5 +203,17 @@ function Start-AuditConsumerAccounts
 
     new-graphConnection -graphHashTable $msGraphValues
 
+    $htmlValues['htmlVerifyMSGraph']=Get-Date
+
     out-logfile -string "Verify graph connection."
+
+    verify-graphConnection -graphHashTable $msGraphValues
+
+    $htmlValues['htmlGetMSGraphUsers']=Get-Date
+
+    out-logfile -string "Obtain all users from entra ID."
+
+    $userList = get-MSGraphUsers
+
+    out-XMLFile -itemToExport $userlist -itemNameToExport $exportNames.usersXML
 }

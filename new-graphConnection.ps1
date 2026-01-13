@@ -1,18 +1,3 @@
-<#
-    .SYNOPSIS
-
-    This function takes the graph hash table and creates the appropriate graph connection.
-
-    .DESCRIPTION
-
-    This function takes the graph hash table and creates the appropriate graph connection.
-
-    .PARAMETER graphHashTable
-
-    The has table of all the relevant graph information
-
-    #>
-
 function New-GraphConnection
 {
     Param

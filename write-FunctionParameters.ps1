@@ -1,46 +1,36 @@
-<#
-    .SYNOPSIS
+Function write-FunctionParameters
+{
+    [cmdletbinding()]
 
-    This function outputs all of the parameters from a function to the log file for review.
+    Param
+    (
+        [Parameter(Mandatory = $true)]
+        $keyArray,
+        [Parameter(Mandatory = $true)]
+        $parameterArray,
+        [Parameter(Mandatory = $true)]
+        $variableArray
+    )
 
-    .DESCRIPTION
+    Out-LogFile -string "********************************************************************************"
 
-    This function outputs all of the parameters from a function to the log file for review.
+    $parameteroutput = @()
 
-    #>
-    Function write-FunctionParameters
+    foreach ($paramName in $keyArray)
     {
-        [cmdletbinding()]
+        $bound = $parameterArray.ContainsKey($paramName)
 
-        Param
-        (
-            [Parameter(Mandatory = $true)]
-            $keyArray,
-            [Parameter(Mandatory = $true)]
-            $parameterArray,
-            [Parameter(Mandatory = $true)]
-            $variableArray
-        )
+        $parameterObject = New-Object PSObject -Property @{
+            ParameterName = $paramName
+            ParameterValue = if ($bound) { $parameterArray[$paramName] }
+                                else { ($variableArray | where {$_.name -eq $paramName } ).value }
+            Bound = $bound
+            }
 
-        Out-LogFile -string "********************************************************************************"
-    
-        $parameteroutput = @()
-    
-        foreach ($paramName in $keyArray)
-        {
-            $bound = $parameterArray.ContainsKey($paramName)
-    
-            $parameterObject = New-Object PSObject -Property @{
-                ParameterName = $paramName
-                ParameterValue = if ($bound) { $parameterArray[$paramName] }
-                                    else { ($variableArray | where {$_.name -eq $paramName } ).value }
-                Bound = $bound
-                }
-    
-            $parameterOutput+=$parameterObject
-        }
-    
-        out-logfile -string $parameterOutput
-
-        Out-LogFile -string "********************************************************************************"
+        $parameterOutput+=$parameterObject
     }
+
+    out-logfile -string $parameterOutput
+
+    Out-LogFile -string "********************************************************************************"
+}

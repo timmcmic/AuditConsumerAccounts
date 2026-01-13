@@ -1,109 +1,87 @@
-<#
-    .SYNOPSIS
+Function Test-PowershellModule
+    {
+    [cmdletbinding()]
 
-    This function tests to see if a powershell module necessary for script execution is present.
+    Param
+    (
+        [Parameter(Mandatory = $true)]
+        [string]$powershellModuleName,
+        [Parameter(Mandatory = $false)]
+        [boolean]$powershellVersionTest=$FALSE
+    )
 
-    .DESCRIPTION
+    #Output all parameters bound or unbound and their associated values.
 
-    This function tests to see if a powershell module necessary for script execution is present.
+    write-functionParameters -keyArray $MyInvocation.MyCommand.Parameters.Keys -parameterArray $PSBoundParameters -variableArray (Get-Variable -Scope Local -ErrorAction Ignore)
 
-    .PARAMETER powershellModuleName
+    #Define variables that will be utilzed in the function.
 
-    The module name to test for.
+    [array]$commandsArray=$NULL
 
-    .PARAMETER powershellVersionTest
-
-    Determines if a version test should be performed.
-
-    .EXAMPLE
-
-    Test-PowershellModule -powershellModuleName NAME -powershellVersionTest TRUE
-
-    #>
-    Function Test-PowershellModule
-     {
-        [cmdletbinding()]
-
-        Param
-        (
-            [Parameter(Mandatory = $true)]
-            [string]$powershellModuleName,
-            [Parameter(Mandatory = $false)]
-            [boolean]$powershellVersionTest=$FALSE
-        )
-
-        #Output all parameters bound or unbound and their associated values.
-
-        write-functionParameters -keyArray $MyInvocation.MyCommand.Parameters.Keys -parameterArray $PSBoundParameters -variableArray (Get-Variable -Scope Local -ErrorAction Ignore)
-
-        #Define variables that will be utilzed in the function.
-
-        [array]$commandsArray=$NULL
+    #Initiate the test.
     
-        #Initiate the test.
-        
-        Out-LogFile -string "BEGIN Test-PowershellModule"
+    Out-LogFile -string "BEGIN Test-PowershellModule"
 
-        #Write function parameter information and variables to a log file.
+    #Write function parameter information and variables to a log file.
 
-        Out-LogFile -string ("PowerShellModuleName = "+$powershellModuleName)
+    Out-LogFile -string ("PowerShellModuleName = "+$powershellModuleName)
 
-        try 
-        {
-            out-logfile -string "Obtaining command count associated with the module."
-            $commandsArray = get-command -module $powershellModuleName -errorAction STOP
-            out-logfile -string $commandsArray.Count.ToString()
-        }
-        catch 
-        {
-            Out-LogFile -string $_ -isError:$TRUE
-        }
+    try 
+    {
+        out-logfile -string "Obtaining command count associated with the module."
+        $commandsArray = get-command -module $powershellModuleName -errorAction STOP
+        out-logfile -string $commandsArray.Count.ToString()
+    }
+    catch 
+    {
+        Out-LogFile -string $_ -isError:$TRUE
+    }
 
-        if ($commandsArray.count -eq 0)
-        {
-            Out-LogFile -string "The powershell module was not found and is required for script functionality." -iserror:$TRUE
-        }
-        else
-        {
-            Out-LogFile -string "The powershell module was found."
-        }    
+    if ($commandsArray.count -eq 0)
+    {
+        Out-LogFile -string "The powershell module was not found and is required for script functionality." -iserror:$TRUE
+    }
+    else
+    {
+        Out-LogFile -string "The powershell module was found."
+    }    
 
-        if ($powershellVersionTest -eq $TRUE)
+    if ($powershellVersionTest -eq $TRUE)
+    {
+        if (get-PackageProvider nuget)
         {
-            if (get-PackageProvider nuget)
+            out-logfile -string "Proceed with version test NUGET package provider installed."
+
+            out-logfile -string "The powershell module is gallery installed - check versions and advise."
+
+            $galleryModule = Find-Module -name $powershellModuleName -ErrorAction Continue
+
+            if ($galleryModule.version -eq $commandsArray[0].version)
             {
-                out-logfile -string "Proceed with version test NUGET package provider installed."
-
-                out-logfile -string "The powershell module is gallery installed - check versions and advise."
-
-                $galleryModule = Find-Module -name $powershellModuleName -ErrorAction Continue
-
-                if ($galleryModule.version -eq $commandsArray[0].version)
-                {
-                    out-logfile -string "The version of the installed module is current."
-                    out-logfile -string ("Gallery Module "+$galleryModule.version)
-                    out-logfile -string ("Installed Module "+$commandsArray[0].version)
-                }
-                elseif ($galleryModule.version -gt $commandsArray[0].version)
-                {
-                    out-logfile -string ("Current gallery module is not installed for module"+$powershellModuleName)    
-                    out-logfile -string ("Gallery Module "+$galleryModule.version)
-                    out-logfile -string ("Installed Module "+$commandsArray[0].version)
-                    out-logfile -string "RECOMMEND MODULE UPGRADE FOR FUTURE AUDITS"   
-                }
-                else 
-                {
-                    out-logfile -string "The version you are using is newer than the gallery module."
-                    out-logfile -string "Have fun trying something new :-)"
-                }
+                out-logfile -string "The version of the installed module is current."
+                out-logfile -string ("Gallery Module "+$galleryModule.version)
+                out-logfile -string ("Installed Module "+$commandsArray[0].version)
+            }
+            elseif ($galleryModule.version -gt $commandsArray[0].version)
+            {
+                out-logfile -string ("Current gallery module is not installed for module"+$powershellModuleName)    
+                out-logfile -string ("Gallery Module "+$galleryModule.version)
+                out-logfile -string ("Installed Module "+$commandsArray[0].version)
+                out-logfile -string "RECOMMEND MODULE UPGRADE FOR FUTURE AUDITS"   
             }
             else 
             {
-                out-logfile -string "NUGET package provider not available - version testing unavailable."    
+                out-logfile -string "The version you are using is newer than the gallery module."
+                out-logfile -string "Have fun trying something new :-)"
             }
         }
-
-        Out-LogFile -string "End Test-PowershellModule"
-
-        return $commandsArray[0].version
+        else 
+        {
+            out-logfile -string "NUGET package provider not available - version testing unavailable."    
+        }
     }
+
+    Out-LogFile -string "End Test-PowershellModule"
+
+    return $commandsArray[0].version
+}
