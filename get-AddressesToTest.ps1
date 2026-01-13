@@ -56,6 +56,8 @@ function get-AddressesToTest
 
             foreach ($address in $user.proxyAddresses)
             {
+                out-logfile -string ("Processing Address: "+$user.userPrincipalName)
+
                 $AddressCount++
 
                 Write-Progress -Activity "Processing address" -Status $address -PercentComplete $PercentCompleteAddress -id 2 -ParentId 1
