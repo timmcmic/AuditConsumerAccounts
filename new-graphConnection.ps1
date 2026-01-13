@@ -56,6 +56,18 @@ function New-GraphConnection
         $msGraphClientSecret 
         {  
             out-logfile -string "Entering graph client secret authentication."
+            
+            $securedPasswordPassword = ConvertTo-SecureString -String $graphHashTable.msGraphClientSecret -AsPlainText -Force
+
+            $clientSecretCredential = New-Object -TypeName System.Management.Automation.PSCredential -argumentList $graphHashTable.msGraphApplicationID,$securedPasswordPassword
+
+             try {
+                connect-mgGraph -tenantID $graphHashTable.msGraphTenantID -Environment $graphHashTable.msGraphEnvironmentName -ClientSecretCredential $clientSecretCredential -errorAction Stop
+            }
+            catch {
+                out-logfile -string "Graph authentication failed."
+                out-logfile -string $_ -isError:$TRUE
+            }
         }
         Default 
         {
