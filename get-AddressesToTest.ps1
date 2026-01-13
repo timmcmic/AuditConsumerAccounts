@@ -31,7 +31,7 @@ function get-AddressesToTest
         out-logfile -string ("Processing user: "+$user.Id)
         out-logfile -string ("Processing UPN: "+$user.userPrincipalName)
 
-        write-progress -activity "Processing Recipient" -status $user.userPrincipalName -PercentComplete $PercentComplete
+        write-progress -activity "Processing Recipient" -status $user.userPrincipalName -PercentComplete $PercentComplete -id 1
 
         $PercentComplete += $ProgressDelta
 
@@ -50,15 +50,20 @@ function get-AddressesToTest
 
         $returnList.add($outputObject) | Out-Null
 
+        $ProgressDeltaAddress = 100/($user.proxyAddresses.count); $PercentCompleteAddress = 0; $AddressCount = 0
+
         foreach ($address in $user.proxyAddresses)
         {
+            $AddressCount++
+
+            Write-Progress -Activity "Processing address" -Status $address -PercentComplete $PercentCompleteAddress -id 2 -ParentId 1
+
+            $PercentCompleteAddress += $ProgressDeltaAddress
+
             if (($address.startsWith($testString)) -or ($address.startsWith($testString2)))
             {
-                out-logfile -string $address
                 $tempAddress = $address.subString(5)
-                out-logfile -string $tempAddress
                 $tempDomain = $tempAddress.split("@")
-                out-logfile -string $tempDomain[1]
 
                 if ($domainslist.Id.contains($tempDomain[1]))
                 {
