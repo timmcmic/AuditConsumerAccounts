@@ -117,6 +117,14 @@ function get-AddressesToTest
 
                 write-progress -Activity "Address Processing Complete" -Completed -Id 2 -ParentId 1
             }
+            else 
+            {
+                out-logfile -string "No proxy addresses to evaluate."
+            }
+        }
+        else
+        {
+            out-logfile -string "Testing only based on primary SMTP address - skip proxy evaulation."
         }
     }
 
