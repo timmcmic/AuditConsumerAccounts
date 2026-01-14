@@ -99,28 +99,17 @@ function get-AddressesToTest
                 write-progress -Activity "Address Processing Complete" -Completed -Id 2 -ParentId 1
             }
         }
-        else 
+        elseif ($user.mail -ne "") 
         {
             out-logfile -string ("Processing Address: "+ $user.mail)
 
-            $tempDomain = $user.Mail.split("@")
-
-            if ($domainslist.Id.contains($tempDomain[1]))
-            {
-                out-logfile -string "Address is valid to test."
-
-                $outputObject = New-Object PSObject -Property @{
-                    ID = $user.id
-                    UPN = $user.userPrincipalName
-                    Address = $user.mail
-                }
-
-                $returnList.add($outputObject)
+            $outputObject = New-Object PSObject -Property @{
+                ID = $user.id
+                UPN = $user.userPrincipalName
+                Address = $user.mail
             }
-            else 
-            {
-                out-logfile -string "Address is not valid to test."
-            }
+
+            $returnList.add($outputObject)
         }
     }
 
