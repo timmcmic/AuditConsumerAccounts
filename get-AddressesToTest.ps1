@@ -56,7 +56,7 @@ function get-AddressesToTest
 
             foreach ($address in $user.proxyAddresses)
             {
-                out-logfile -string ("Processing Address: "+$user.userPrincipalName)
+                out-logfile -string ("Processing Address: "+ $address)
 
                 $AddressCount++
 
@@ -86,11 +86,17 @@ function get-AddressesToTest
                         out-logfile -string "Address is not valid to test."
                     }
                 }
+                else 
+                {
+                    out-logfile -string "Address is not valid to test."
+                }
             }
+
+            write-progress -Activity "Address Processing Complete" -Completed -Id 2 -ParentId 1
         }
     }
 
-    write-progress -activity "Processing Recipient" -completed
+    write-progress -activity "Processing Recipient" -completed -Id 1
 
     $returnListCount = $returnList.Count
 
