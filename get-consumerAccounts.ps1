@@ -23,7 +23,7 @@ function get-ConsumerAccounts
 
         out-logfile -string ("Testing consumer account for: "+$account.address)
 
-        write-progress -activity "Processing Recipient" -status $account.userPrincipalName -PercentComplete $PercentComplete
+        write-progress -activity "Processing Recipient" -status $account.UPN -PercentComplete $PercentComplete
 
         $PercentComplete += $ProgressDelta
 
