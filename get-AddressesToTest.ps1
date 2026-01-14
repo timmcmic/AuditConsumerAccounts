@@ -51,19 +51,17 @@ function get-AddressesToTest
 
             $returnList.add($outputObject) | Out-Null
 
-            if ($testPrimarySMTPOnly -eq $TRUE)
+            if (($testPrimarySMTPOnly -eq $TRUE) -and ($user.mail -ne ""))
             {
-                {
-                    out-logfile -string ("Processing Address: "+ $user.mail)
+                out-logfile -string ("Processing Address: "+ $user.mail)
 
-                    $outputObject = New-Object PSObject -Property @{
-                        ID = $user.id
-                        UPN = $user.userPrincipalName
-                        Address = $user.mail
-                    }
-
-                    $returnList.add($outputObject)
+                $outputObject = New-Object PSObject -Property @{
+                    ID = $user.id
+                    UPN = $user.userPrincipalName
+                    Address = $user.mail
                 }
+
+                $returnList.add($outputObject)
             }
             else 
             {
