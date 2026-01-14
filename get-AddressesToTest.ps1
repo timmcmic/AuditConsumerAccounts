@@ -48,9 +48,28 @@ function get-AddressesToTest
                     UPN = $user.userPrincipalName
                     Address = $user.userPrincipalName
             }
-        }
 
-        $returnList.add($outputObject) | Out-Null
+            $returnList.add($outputObject) | Out-Null
+
+            if ($testPrimarySMTPOnly -eq $TRUE)
+            {
+                {
+                    out-logfile -string ("Processing Address: "+ $user.mail)
+
+                    $outputObject = New-Object PSObject -Property @{
+                        ID = $user.id
+                        UPN = $user.userPrincipalName
+                        Address = $user.mail
+                    }
+
+                    $returnList.add($outputObject)
+                }
+            }
+            else 
+            {
+                out-logfile -string "Not processing mail address."
+            }
+        }
 
         if ($testPrimarySMTPOnly -eq $FALSE)
         {
@@ -98,18 +117,6 @@ function get-AddressesToTest
 
                 write-progress -Activity "Address Processing Complete" -Completed -Id 2 -ParentId 1
             }
-        }
-        elseif ($user.mail -ne "") 
-        {
-            out-logfile -string ("Processing Address: "+ $user.mail)
-
-            $outputObject = New-Object PSObject -Property @{
-                ID = $user.id
-                UPN = $user.userPrincipalName
-                Address = $user.mail
-            }
-
-            $returnList.add($outputObject)
         }
     }
 
