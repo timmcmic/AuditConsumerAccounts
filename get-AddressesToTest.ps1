@@ -5,7 +5,9 @@ function get-AddressesToTest
         [Parameter(Mandatory = $true)]
         $userList,
         [Parameter(Mandatory = $true)]
-        $domainsList
+        $domainsList,
+        [Parameter(Mandatory = $TRUE)]
+        $testPrimarySMTPOnly
     )
 
     out-logfile -string "Being Get-AddressesToTest"
@@ -50,49 +52,75 @@ function get-AddressesToTest
 
         $returnList.add($outputObject) | Out-Null
 
-        if ($user.proxyAddresses.count -gt 0)
+        if ($testPrimarySMTPOnly -eq $FALSE)
         {
-            $ProgressDeltaAddress = 100/($user.proxyAddresses.count); $PercentCompleteAddress = 0; $AddressCount = 0
-
-            foreach ($address in $user.proxyAddresses)
+             if ($user.proxyAddresses.count -gt 0)
             {
-                out-logfile -string ("Processing Address: "+ $address)
+                $ProgressDeltaAddress = 100/($user.proxyAddresses.count); $PercentCompleteAddress = 0; $AddressCount = 0
 
-                $AddressCount++
-
-                Write-Progress -Activity "Processing address" -Status $address -PercentComplete $PercentCompleteAddress -id 2 -ParentId 1
-
-                $PercentCompleteAddress += $ProgressDeltaAddress
-
-                if (($address.startsWith($testString)) -or ($address.startsWith($testString2)))
+                foreach ($address in $user.proxyAddresses)
                 {
-                    $tempAddress = $address.subString(5)
-                    $tempDomain = $tempAddress.split("@")
+                    out-logfile -string ("Processing Address: "+ $address)
 
-                    if ($domainslist.Id.contains($tempDomain[1]))
+                    $AddressCount++
+
+                    Write-Progress -Activity "Processing address" -Status $address -PercentComplete $PercentCompleteAddress -id 2 -ParentId 1
+
+                    $PercentCompleteAddress += $ProgressDeltaAddress
+
+                    if (($address.startsWith($testString)) -or ($address.startsWith($testString2)))
                     {
-                        out-logfile -string "Address is valid to test."
+                        $tempAddress = $address.subString(5)
+                        $tempDomain = $tempAddress.split("@")
 
-                        $outputObject = New-Object PSObject -Property @{
-                            ID = $user.id
-                            UPN = $user.userPrincipalName
-                            Address = $tempAddress
+                        if ($domainslist.Id.contains($tempDomain[1]))
+                        {
+                            out-logfile -string "Address is valid to test."
+
+                            $outputObject = New-Object PSObject -Property @{
+                                ID = $user.id
+                                UPN = $user.userPrincipalName
+                                Address = $tempAddress
+                            }
+
+                            $returnList.add($outputObject)
                         }
-
-                        $returnList.add($outputObject)
+                        else 
+                        {
+                            out-logfile -string "Address is not valid to test."
+                        }
                     }
                     else 
                     {
                         out-logfile -string "Address is not valid to test."
                     }
                 }
-                else 
-                {
-                    out-logfile -string "Address is not valid to test."
-                }
-            }
 
-            write-progress -Activity "Address Processing Complete" -Completed -Id 2 -ParentId 1
+                write-progress -Activity "Address Processing Complete" -Completed -Id 2 -ParentId 1
+            }
+        }
+        else 
+        {
+            out-logfile -string ("Processing Address: "+ $user.mail)
+
+            $tempDomain = $user.Mail.split("@")
+
+            if ($domainslist.Id.contains($tempDomain[1]))
+            {
+                out-logfile -string "Address is valid to test."
+
+                $outputObject = New-Object PSObject -Property @{
+                    ID = $user.id
+                    UPN = $user.userPrincipalName
+                    Address = $user.mail
+                }
+
+                $returnList.add($outputObject)
+            }
+            else 
+            {
+                out-logfile -string "Address is not valid to test."
+            }
         }
     }
 

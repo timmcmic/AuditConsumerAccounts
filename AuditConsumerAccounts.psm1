@@ -106,7 +106,10 @@ function Start-AuditConsumerAccounts
         [string]$logFolderPath,
         #Define telemetry parameters
         [Parameter(Mandatory = $false)]
-        [boolean]$allowTelemetryCollection=$TRUE
+        [boolean]$allowTelemetryCollection=$TRUE,
+        #Define optional paramters
+        [Parameter(Mandatory = $false)]
+        [boolean]$testPrimarySMTPOnly=$false
     )
 
     #Initialize telemetry collection.
@@ -238,7 +241,7 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlAddressesToTest']=Get-Date
 
-    $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList
+    $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
 
     out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
 
