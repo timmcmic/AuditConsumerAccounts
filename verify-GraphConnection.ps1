@@ -33,7 +33,7 @@ function verify-GraphConnection
     }
     else 
     {
-        out-logfile -string "Missing valid domain scope.  User or application must have Domain.Read.All or Domain.ReadWrite.All"
+        out-logfile -string "Missing valid domain scope.  User or application must have Domain.Read.All or Domain.ReadWrite.All" -isError:$true
     }
 
     out-logfile -string "Validate that the scopes contain the specified user scope."
@@ -44,7 +44,7 @@ function verify-GraphConnection
     }
     else 
     {
-        out-logfile -string "Missing valid user scope.  User or application must have User.Read.All or User.ReadWrite.All or Directory.Read.All or Directory.ReadWrite.All"
+        out-logfile -string "Missing valid user scope.  User or application must have User.Read.All or User.ReadWrite.All or Directory.Read.All or Directory.ReadWrite.All" -isError:$true
     }
 
     out-logfile -string "End Verify-GraphConnection"

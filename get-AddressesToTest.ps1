@@ -54,7 +54,7 @@ function get-AddressesToTest
 
         if ($testPrimarySMTPOnly -eq $FALSE)
         {
-             if ($user.proxyAddresses.count -gt 0)
+            if ($user.proxyAddresses.count -gt 0)
             {
                 $ProgressDeltaAddress = 100/($user.proxyAddresses.count); $PercentCompleteAddress = 0; $AddressCount = 0
 
