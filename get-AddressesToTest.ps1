@@ -47,6 +47,8 @@ function get-AddressesToTest
                     ID = $user.id
                     UPN = $user.userPrincipalName
                     Address = $user.userPrincipalName
+                    AccountPresent = $false
+                    AccountError=$false
             }
 
             $returnList.add($outputObject) | Out-Null
@@ -59,6 +61,8 @@ function get-AddressesToTest
                     ID = $user.id
                     UPN = $user.userPrincipalName
                     Address = $user.mail
+                    AccountPresent = $false
+                    AccountError=$false
                 }
 
                 $returnList.add($outputObject)
@@ -98,6 +102,8 @@ function get-AddressesToTest
                                 ID = $user.id
                                 UPN = $user.userPrincipalName
                                 Address = $tempAddress
+                                AccountPresent = $false
+                                AccountError=$false
                             }
 
                             $returnList.add($outputObject)

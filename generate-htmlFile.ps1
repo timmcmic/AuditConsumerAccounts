@@ -46,6 +46,18 @@ function Generate-HTMLFile
             {
                 new-HTMLText -Text "No Consumer Accounts Found" -FontSize 24 -Color White -BackGroundColor Red -Alignment center
             }
+
+            $test = $accounts | where {$_.accountError -eq $TRUE}
+
+            if ($test.count -gt 0)
+            {
+                out-logfile -string "Account testing failed - list errors.."
+
+                new-htmlSection -HeaderText ("Consumer Account Failed Queries") {
+                    new-htmlTable -DataTable ($accounts | Select-Object Address,ID,UPN) -Filtering -AlphabetSearch{
+                    } 
+                }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Red"  -CanCollapse -BorderRadius 10px -collapsed
+            }
         
             out-logfile -string "Generate timeline."
 

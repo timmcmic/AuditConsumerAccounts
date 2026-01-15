@@ -32,7 +32,9 @@ function get-ConsumerAccounts
         }
         catch {
             out-logfile -string "Unable to test for presence of commercial account."
-            out-logfile -string $_ -isError:$true
+            out-logfile -string $_
+            
+            $account.AccountError = $true
         }
 
         out-logfile -string "Successfully tested for consumer account."
@@ -41,12 +43,16 @@ function get-ConsumerAccounts
         {
             out-logfile -string "A consumer account is present."
 
-            $returnList.add($account)
+            $account.AccountPresent = $true
         }
         else 
         {
+            $account.AccountPresent = $false
+
             out-logfile -string "A consumer account is not present."
         }
+
+        $returnList.add($account)
     }
 
     write-progress -activity "Processing Recipient" -completed
