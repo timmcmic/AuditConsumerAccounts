@@ -33,12 +33,14 @@ function Generate-HTMLFile
 
             out-logfile -string "Generate consumer account table."
 
-            if ($accounts.count -gt 0)
+            $test = $accounts | where {$_.AccountPresent -eq $true}
+
+            if ($test -gt 0)
             {
                 out-logfile -string "Consumer accounts were present - generate table."
 
                 new-htmlSection -HeaderText ("Consumer Account Summary Report") {
-                    new-htmlTable -DataTable ($accounts | Select-Object Address,ID,UPN) -Filtering -AlphabetSearch{
+                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN) -Filtering -AlphabetSearch{
                     } 
                 }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Blue"  -CanCollapse -BorderRadius 10px -collapsed
             }
@@ -54,7 +56,7 @@ function Generate-HTMLFile
                 out-logfile -string "Account testing failed - list errors.."
 
                 new-htmlSection -HeaderText ("Consumer Account Failed Queries") {
-                    new-htmlTable -DataTable ($accounts | Select-Object Address,ID,UPN) -Filtering -AlphabetSearch{
+                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN) -Filtering -AlphabetSearch{
                     } 
                 }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Red"  -CanCollapse -BorderRadius 10px -collapsed
             }
