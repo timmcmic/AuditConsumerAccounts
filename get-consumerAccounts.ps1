@@ -32,7 +32,7 @@ function get-ConsumerAccounts
         }
         catch {
             out-logfile -string "Unable to test for presence of commercial account."
-            out-logfile -string $_
+            out-logfile -string $_ -isError:$true
         }
 
         out-logfile -string "Successfully tested for consumer account."

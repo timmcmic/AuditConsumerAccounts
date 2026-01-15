@@ -51,7 +51,7 @@ function get-AddressesToTest
 
             $returnList.add($outputObject) | Out-Null
 
-            if (($testPrimarySMTPOnly -eq $TRUE) -and ($user.mail -ne ""))
+            if (($testPrimarySMTPOnly -eq $TRUE) -and ($user.mail -ne $null))
             {
                 out-logfile -string ("Processing Address: "+ $user.mail)
 
