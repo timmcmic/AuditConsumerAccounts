@@ -57,7 +57,10 @@ function get-ConsumerAccounts
 
     write-progress -activity "Processing Recipient" -completed
 
-    out-logfile -string ("Count of consumer accounts located: "+$returnList.Count)
+    $returnList = $returnlist | where {($_.accountError -eq $TRUE) -or ($_.AccountPresent -eq $true)}
+
+    out-logfile -string ("Count of consumer accounts located: "+($returnList | where {$_.AccountPresent -eq $true}).Count)
+    out-logfile -string ("Count of account test failures: "+($returnList | where {$_.AccountError -eq $true}).Count)
 
     out-logfile -string "End Get-ConsumerAccounts"
 
