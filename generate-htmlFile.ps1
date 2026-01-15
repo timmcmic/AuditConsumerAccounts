@@ -35,7 +35,7 @@ function Generate-HTMLFile
 
             $test = $accounts | where {$_.AccountPresent -eq $true}
 
-            if ($test -gt 0)
+            if ($test.count -gt 0)
             {
                 out-logfile -string "Consumer accounts were present - generate table."
 
