@@ -14,7 +14,7 @@
 # EVEN IF MICROSOFT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES						#
 #############################################################################################
 
-function Start-AuditConsumerAccounts
+function Start-MultipleAuditConsumerAccounts
 {
     <#
     .SYNOPSIS
@@ -109,9 +109,7 @@ function Start-AuditConsumerAccounts
         [boolean]$allowTelemetryCollection=$TRUE,
         #Define optional paramters
         [Parameter(Mandatory = $false)]
-        [boolean]$testPrimarySMTPOnly=$false,
-        [Parameter(Mandatory = $false)]
-        $bringYourOwnUsers
+        [boolean]$testPrimarySMTPOnly=$false
     )
 
     #Initialize telemetry collection.

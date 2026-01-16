@@ -74,10 +74,10 @@ RequiredModules = @(
 # FormatsToProcess = @()
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @('send-TelemetryEvent.ps1','Get-ElapsedTime.ps1','Generate-HTMLFile.ps1','Get-ConsumerAccounts.ps1','Out-CSVFile.ps1','Get-AddressesToTest.ps1','Get-MSGraphDomains.ps1','Out-XMLFile.ps1','Get-MSGraphusers.ps1','Verify-GraphConnection.ps1','New-GraphConnection.ps1','Write-FunctionParameters.ps1','Test-PowerShellModule.ps1','Disable-AllPowershellSessions.ps1','Get-UniversalDateTime.ps1','New-LogFile.ps1','Out-LogFile.ps1','Start-TelemetryConfiguration.ps1')
+NestedModules = @('Start-MultipleAuditConsumerAccounts.ps1','send-TelemetryEvent.ps1','Get-ElapsedTime.ps1','Generate-HTMLFile.ps1','Get-ConsumerAccounts.ps1','Out-CSVFile.ps1','Get-AddressesToTest.ps1','Get-MSGraphDomains.ps1','Out-XMLFile.ps1','Get-MSGraphusers.ps1','Verify-GraphConnection.ps1','New-GraphConnection.ps1','Write-FunctionParameters.ps1','Test-PowerShellModule.ps1','Disable-AllPowershellSessions.ps1','Get-UniversalDateTime.ps1','New-LogFile.ps1','Out-LogFile.ps1','Start-TelemetryConfiguration.ps1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Start-AuditConsumerAccounts')
+FunctionsToExport = @('Start-MultipleAuditConsumerAccounts','Start-AuditConsumerAccounts')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
