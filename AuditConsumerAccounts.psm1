@@ -109,7 +109,13 @@ function Start-AuditConsumerAccounts
         [boolean]$allowTelemetryCollection=$TRUE,
         #Define optional paramters
         [Parameter(Mandatory = $false)]
-        [boolean]$testPrimarySMTPOnly=$false
+        [boolean]$testPrimarySMTPOnly=$false,
+        [Parameter(Mandatory = $false)]
+        $bringYourOwnDomains=$NULL,
+        [Parameter(Mandatory = $false)]
+        $bringYourOwnUsers=$NULL,
+        [Parameter(Mandatory = $false)]
+        $bringYourOwnAddresses=$NULL
     )
 
     #Initialize telemetry collection.
