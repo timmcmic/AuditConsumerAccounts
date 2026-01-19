@@ -217,6 +217,33 @@ function Start-AuditConsumerAccounts
     $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
     $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
+    if ($bringYourOwnDomains -ne $NULL)
+    {
+        out-logfile -string ("Count of domains provided: "+$bringYourOwnDomains.count)
+    }
+    else 
+    {
+        Out-logfile -string "Domains not provided."
+    }
+
+    if ($bringYourOwnUsers -ne $NULL)
+    {
+        out-logfile -string ("Count of users provided: "+$bringYourOwnUsers.count)
+    }
+    else 
+    {
+        Out-logfile -string "Users not provided."
+    }
+
+    if ($bringYourOwnAddresses -ne $NULL)
+    {
+        out-logfile -string ("Count of users provided: "+$bringYourOwnAddresses.count)
+    }
+    else 
+    {
+        Out-logfile -string "Addresses not provided."
+    }
+
     $htmlValues['htmlStartMSGraph']=Get-Date
 
     out-logfile -string "Establish graph connection."
