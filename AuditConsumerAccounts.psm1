@@ -111,7 +111,11 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [boolean]$testPrimarySMTPOnly=$false,
         [Parameter(Mandatory = $false)]
-        $bringYourOwnUsers
+        $bringYourOwnUsers,
+        [Parameter(Mandatory = $false)]
+        $bringYourOwnAddresses,
+        [Parameter(Mandatory = $false)]
+        $bringYourOwnDomains
     )
 
     #Initialize telemetry collection.
@@ -215,29 +219,61 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlStartMSGraph']=Get-Date
 
-    out-logfile -string "Establish graph connection."
+    if($bringYourOwnUsers.count -ne 0 -or $bringYourOwnAddresses.count -ne 0)
+    {
+        out-logfile -string "Establish graph connection."
 
-    new-graphConnection -graphHashTable $msGraphValues
+        new-graphConnection -graphHashTable $msGraphValues
+    }
+    else 
+    {
+        out-logfile -string "Graph connection not required - users or addresses provided."
+    }
 
     $htmlValues['htmlVerifyMSGraph']=Get-Date
 
-    out-logfile -string "Verify graph connection."
+    if($bringYourOwnUsers.count -ne 0 -or $bringYourOwnAddresses.count -ne 0)
+    {
+        out-logfile -string "Verify graph connection."
 
-    verify-graphConnection -graphHashTable $msGraphValues
+        verify-graphConnection -graphHashTable $msGraphValues
+    }
+    else 
+    {
+        out-logfile -string "Graph verification not required - users or addresses provdied."
+    }
 
     $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
-    out-logfile -string "Obtain all users from entra ID."
+    if($bringYourOwnUsers.count -ne 0 -or $bringYourOwnAddresses.count -ne 0)
+    {
+        out-logfile -string "Obtain all users from entra ID."
 
-    $userList = get-MSGraphUsers
+        $userList = get-MSGraphUsers
+    }
+    else 
+    {
+        $userList = $bringYourOwnUsers
+
+        out-logfile -string "Graph obtain users not required - users provided."
+    }
 
     out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
 
+    if($bringYourOwnDomains.count -ne 0 -and $bringYourOwnUsers.count -ne 0)
+    {
+        out-logfile -string "Obtain all domains from entra id."
+
+        $domainsList = get-msGraphDomains
+    }
+    else 
+    {
+        $domainsList = $bringYourOwnDomains
+
+        out-logfile -string "Graph obtain domains not required - domains provided."
+    }
+
     $htmlValues['htmlGetMSGraphDomains']=Get-Date
-
-    out-logfile -string "Obtain all domains from entra id."
-
-    $domainsList = get-msGraphDomains
 
     out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
 
@@ -247,11 +283,46 @@ function Start-AuditConsumerAccounts
 
     out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
 
+    if ($bringYourOwnUsers.count -gt 0)
+    {
+        out-logfile -string "We have reached the end of address validation.  Exit"
+
+        exit
+    }
+    else 
+    {
+        out-logfile -string "Continue with consumer validation."
+    }
+
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
-    $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+    if ($bringYourOwnAddresses.count -ne 0)
+    {
+        out-logfile -string "Addresses not provided - get consumer accounts."
 
+         $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+    }
+    else 
+    {
+        out-logfile -string "Addresses provided - utilize provided addresses."
+
+        $addressesToTest = $bringYourOwnAddresses
+
+        $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+    }
+    
     out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+
+    if ($bringYourOwnAddresses.count -ne 0)
+    {
+        out-logfile -string "We have reached the end of consumer account validation.  Exit"
+
+        exit
+    }
+    else 
+    {
+        out-logfile -string "Continue with consumer account presentation"
+    }
 
     $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
     $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
