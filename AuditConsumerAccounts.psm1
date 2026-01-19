@@ -111,11 +111,11 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [boolean]$testPrimarySMTPOnly=$false,
         [Parameter(Mandatory = $false)]
-        $bringYourOwnUsers,
+        $bringYourOwnUsers=@(),
         [Parameter(Mandatory = $false)]
-        $bringYourOwnAddresses,
+        $bringYourOwnAddresses=@(),
         [Parameter(Mandatory = $false)]
-        $bringYourOwnDomains
+        $bringYourOwnDomains=@()
     )
 
     #Initialize telemetry collection.
@@ -219,7 +219,7 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlStartMSGraph']=Get-Date
 
-    if($bringYourOwnUsers.count -ne 0 -or $bringYourOwnAddresses.count -ne 0)
+    if($bringYourOwnUsers.count -gt 0 -or $bringYourOwnAddresses.count -gt 0)
     {
         out-logfile -string "Establish graph connection."
 
@@ -232,7 +232,7 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlVerifyMSGraph']=Get-Date
 
-    if($bringYourOwnUsers.count -ne 0 -or $bringYourOwnAddresses.count -ne 0)
+    if($bringYourOwnUsers.count -gt 0 -or $bringYourOwnAddresses.count -gt 0)
     {
         out-logfile -string "Verify graph connection."
 
@@ -245,7 +245,7 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
-    if($bringYourOwnUsers.count -ne 0 -or $bringYourOwnAddresses.count -ne 0)
+    if($bringYourOwnUsers.count -gt 0 -or $bringYourOwnAddresses.count -gt 0)
     {
         out-logfile -string "Obtain all users from entra ID."
 
@@ -260,7 +260,7 @@ function Start-AuditConsumerAccounts
 
     out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
 
-    if($bringYourOwnDomains.count -ne 0 -and $bringYourOwnUsers.count -ne 0)
+    if($bringYourOwnDomains.count -gt 0 -and $bringYourOwnUsers.count -gt 0)
     {
         out-logfile -string "Obtain all domains from entra id."
 
@@ -296,7 +296,7 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
-    if ($bringYourOwnAddresses.count -ne 0)
+    if ($bringYourOwnAddresses.count -gt 0)
     {
         out-logfile -string "Addresses not provided - get consumer accounts."
 
@@ -313,7 +313,7 @@ function Start-AuditConsumerAccounts
     
     out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
 
-    if ($bringYourOwnAddresses.count -ne 0)
+    if ($bringYourOwnAddresses.count -gt 0)
     {
         out-logfile -string "We have reached the end of consumer account validation.  Exit"
 
