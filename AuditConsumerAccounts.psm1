@@ -248,7 +248,16 @@ function Start-AuditConsumerAccounts
 
     out-logfile -string "Establish graph connection."
 
-    new-graphConnection -graphHashTable $msGraphValues
+    if($bringYourOwnUsers -eq $null)
+    {
+        out-logfile -string "Users not provided - graph connection required."
+        
+        new-graphConnection -graphHashTable $msGraphValues
+    }
+    else 
+    {
+        out-logfile -string "Users provided - graph connection not required."
+    }
 
     $htmlValues['htmlVerifyMSGraph']=Get-Date
 
