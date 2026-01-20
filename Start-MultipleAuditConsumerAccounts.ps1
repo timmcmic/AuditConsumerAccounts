@@ -284,7 +284,7 @@ function Start-MultipleAuditConsumerAccounts
 
     test-jobStatus
 
-    out-logfile -string "Validate all jobs completed successfully."
+    validate-jobStatus
 
     $addressesToTest = get-multipleXMLFiles -fileName $exportNames.addressesToTextXML -baseName $logFileName -logFolderPath $logFolderPath
 
@@ -313,6 +313,8 @@ function Start-MultipleAuditConsumerAccounts
     }
 
     test-jobStatus
+
+    validate-jobStatus
 
     start-sleep -s 600
 
