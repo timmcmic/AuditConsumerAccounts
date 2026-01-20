@@ -35,6 +35,19 @@ function get-ChunkList
         $chunks.Add($listToChunk[$i..$endIndex]) | Out-Null
     }
 
+    if ($isCustomObject -eq $TRUE)
+    {
+        for ($i=0 ; $i -lt $chunks.count ; $i++)
+        {
+            out-logfile -string ("Converting chunk number to array: "+$i.tostring())
+
+            $convert = [System.Collections.Generic.List[psCustomObject]]$chunks[$i]
+
+            $chunks[$i] = $convert
+        }
+
+    }
+
     out-logfile -string ("Count of chunks: "+$chunks.Count)
 
     foreach ($chunk in $chunks)

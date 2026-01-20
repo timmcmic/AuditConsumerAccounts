@@ -113,7 +113,7 @@ function Start-MultipleAuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [int]$userBatchSize=1000,
         [Parameter(Mandatory = $false)]
-        [int]$jobThreadCount=5
+        [int]$jobThreadCount=10
     )
 
     #Initialize telemetry collection.
@@ -274,11 +274,25 @@ function Start-MultipleAuditConsumerAccounts
 
         if ($msGraphValues.msGraphAuthenticationType -eq "Certificate")
         {
-            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphCertificateThumbprint $args[2] -msGraphApplicationID $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphCertificateThumbprint,$msGraphApplicationID,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+            if ($i -eq 0)
+            {
+                Start-ThreadJob -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphCertificateThumbprint $args[2] -msGraphApplicationID $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphCertificateThumbprint,$msGraphApplicationID,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i] -ThrottleLimit $jobThreadCount
+            }
+            else 
+            {
+                Start-ThreadJob -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphCertificateThumbprint $args[2] -msGraphApplicationID $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphCertificateThumbprint,$msGraphApplicationID,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+            }
         }
         elseif ($msGraphValues.msGraphAuthenticationType -eq "ClientSecret")
         {
-            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+            if ($i -eq 0)
+            {
+                Start-ThreadJob -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i] -ThrottleLimit $jobThreadCount
+            }
+            else 
+            {
+                Start-ThreadJob -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+            }
         }    
     }
 
@@ -294,7 +308,16 @@ function Start-MultipleAuditConsumerAccounts
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
+    out-logfile -string $addressesToTest.getType()
+
+    start-sleep -m 600
+
     $addressesToTest = get-chunklist -listToChunk $addressesToTest -userBatchSize $userBatchSize -isCustomObject $true
+
+    out-logfile -string $addressesToTest.getType()
+    out-logfile -string $addressesToTest[0].getType()
+
+    start-sleep -s 600
 
     for ($i = 0 ; $i -lt $addressesToTest.count ; $i++)
     {
