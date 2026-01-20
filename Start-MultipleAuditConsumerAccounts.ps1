@@ -282,17 +282,7 @@ function Start-MultipleAuditConsumerAccounts
         }    
     }
 
-    do {
-        out-logfile -string "Jobs are not yet completed in this batch."
-
-        $loopJobs = Get-Job -state Running | where {$_.name -eq $logFileName}
-
-        out-logfile -string ("Number of jobs that are running: "+$loopJobs.count.tostring())
-
-        start-sleepProgress -sleepString "Sleeping waiting on job completion." -sleepSeconds 30
-    } until (
-        (Get-Job -state Running | where {$_.name -eq $logFileName}).count -eq 0
-    )
+    test-jobStatus
 
     out-logfile -string "Validate all jobs completed successfully."
 
@@ -321,6 +311,8 @@ function Start-MultipleAuditConsumerAccounts
             Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnAddresses $args[9] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$addressesToTest
         }    
     }
+
+    test-jobStatus
 
     start-sleep -s 600
 
