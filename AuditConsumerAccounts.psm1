@@ -248,50 +248,119 @@ function Start-AuditConsumerAccounts
 
     out-logfile -string "Establish graph connection."
 
-    if($bringYourOwnUsers -eq $null)
+    if(($bringYourOwnUsers -eq $null) -and ($bringYourOwnAddresses -eq $null))
     {
-        out-logfile -string "Users not provided - graph connection required."
-        
+        out-logfile -string "Users or addresses not provided - graph connection required."
+
         new-graphConnection -graphHashTable $msGraphValues
     }
     else 
     {
-        out-logfile -string "Users provided - graph connection not required."
+        out-logfile -string "Users or addresses provided - graph connection not required."
     }
 
     $htmlValues['htmlVerifyMSGraph']=Get-Date
 
-    out-logfile -string "Verify graph connection."
+    if(($bringYourOwnUsers -eq $null) -and ($bringYourOwnAddresses -eq $null))
+    {
+        out-logfile -string "Users or addresses not provdied - verify graph connection required."
 
-    verify-graphConnection -graphHashTable $msGraphValues
+        verify-graphConnection -graphHashTable $msGraphValues
+    }
+    else 
+    {
+        out-logfile -string "Users or addresses provided - verify graph connection not required."
+    }
 
     $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
-    out-logfile -string "Obtain all users from entra ID."
+    if(($bringYourOwnUsers -eq $null) -and ($bringYourOwnAddresses -eq $null))
+    {
+        out-logfile -string "Users or addresses not provided - obtain users required."
 
-    $userList = get-MSGraphUsers
+        $userList = get-MSGraphUsers
+    }
+    elseif($bringYourOwnUsers -ne $NULL) 
+    {
+        out-logfile -string "Users provided - set userlist."
 
-    out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
+        $userList = $bringYourOwnUsers
+    }
+    else 
+    {
+        out-logfile -string "Addresses provided - skip user list."
+    }
+    
+    if ($userList.count -gt 0)
+    {
+        out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
+    }
 
     $htmlValues['htmlGetMSGraphDomains']=Get-Date
 
-    out-logfile -string "Obtain all domains from entra id."
+    if (($bringYourOwnDomains -eq $NULL) -and ($bringYourOwnUsers -eq $NULL) -and ($bringYourOwnAddresses -eq $null))
+    {
+        out-logfile -string "Domains not provided - obtain domains."
 
-    $domainsList = get-msGraphDomains
+        $domainsList = get-msGraphDomains
+    }
+    elseif (($bringYourOwnDomains -ne $null) -and ($bringYourOwnUsers -ne $null)) 
+    {
+        out-logfile -string "Domains provided - skip domains list"
 
-    out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
+        $domainsList = $bringYourOwnDomains
+    }
+    else 
+    {
+        out-logfile -string "Domains not provided / users provided -> domains must be provided." -isError:$true
+    }
 
+    if ($domainsList.count -gt 0)
+    {
+        out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
+    }
+    
     $htmlValues['htmlAddressesToTest']=Get-Date
 
     $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
 
     out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
 
+    if ($bringYourOwnUsers -ne $NULL)
+    {
+        out-logfile -string "User tests concluded - exit to calling function."
+
+        exit
+    }
+    else 
+    {
+        out-logfile -string "Multiple tests not run - proceed to consumer tests."
+    }
+
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
-    $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+    if ($bringYourOwnAddresses -ne $NULL)
+    {
+        out-logfile -string "Addresses provided - proceed with consumer testing."
 
-    out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+        $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+    }
+
+    if ($consumerAccountList.count -gt 0)
+    {
+        out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+    }
+
+    if ($bringYourOwnAddresses -ne $NULL)
+    {
+        out-logfile -string "Consumer testing concluded - exit to calling function"
+
+        exit
+    }
+    else 
+    {
+        out-logfile -string "Multiple tests not run - proceed to reporting"
+    }
 
     $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
     $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
