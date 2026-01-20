@@ -192,14 +192,27 @@ function Start-MultipleAuditConsumerAccounts
     $domainsList
     $addressesToTest
     $consumerAccountList
+    $chunkedAddressesToTest
 
     #Start the log file.
 
     new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
 
     out-logfile -string "==============================================================="
-    out-logfile -string "BEGIN Start-AuditConsumerAccounts"
+    out-logfile -string "BEGIN Start-MultipleAuditConsumerAccounts"
     out-logfile -string "==============================================================="
+
+    out-logfile -string "Testing for supported graph authentication method."
+
+    if (($msGraphValues.msGraphAuthenticationType -ne "Certificate") -or ($msGraphValues.msGraphAuthenticationType -ne "ClientSecret"))
+    {
+        out-logfile -string "Client secret or certificate authentication is required to perform multiple tests."
+        out-logfile -string "Invalid graph authentication type for multiple tests." -isError:$TRUE
+    }
+    else 
+    {
+        out-logfile -string "Certificate or client secret authentication type - proceed."
+    }
 
     $htmlValues['htmlStartPowershellValidation']=Get-Date
 
@@ -239,6 +252,10 @@ function Start-MultipleAuditConsumerAccounts
 
     out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
 
+    $userList = get-chunklist -listToChunk $userList
+
+    <#
+
     $htmlValues['htmlAddressesToTest']=Get-Date
 
     $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
@@ -250,6 +267,8 @@ function Start-MultipleAuditConsumerAccounts
     $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
 
     out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+
+    #>
 
     $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
     $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
