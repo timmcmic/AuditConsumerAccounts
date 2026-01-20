@@ -258,6 +258,8 @@ function Start-MultipleAuditConsumerAccounts
 
     $userList = get-chunklist -listToChunk $userList
 
+    out-logfile -string "Clear any jobs that may exist."
+
     Clear-PSJob
 
     for ($i = 0 ; $i -lt $userList.count ; $i++)
