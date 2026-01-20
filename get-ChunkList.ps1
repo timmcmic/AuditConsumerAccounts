@@ -5,14 +5,24 @@ function get-ChunkList
         [Parameter(Mandatory = $true)]
         $listToChunk,
         [Parameter(Mandatory = $true)]
-        $userBatchSize
+        $userBatchSize,
+        [Parameter(Mandatory = $true)]
+        $isCustomObject
     )
 
     out-logfile -string "Start Get-ChunkList"
 
     $chunkSize = $userBatchSize
 
-    $chunks = [System.Collections.Generic.List[Object]]::New()
+    if ($isCustomObject -ne $true)
+    {
+        $chunks = [System.Collections.Generic.List[Object]]::New()
+    }
+    else 
+    {
+        $chunks = [System.Collections.Generic.List[psCustomObject]]::New()
+    }
+
 
     out-logfile -string "Starting to chunk the list provided..."
 
