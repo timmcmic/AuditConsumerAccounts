@@ -11,7 +11,7 @@ function Clear-PSJob
     }
 
     try {
-        $jobs | stop-job -Confirm:$FALSE:$FALSE -ErrorAction Stop
+        $jobs | stop-job -Confirm:$FALSE -ErrorAction Stop
     }
     catch {
         out-logfile -string "Unable to stop jobs."

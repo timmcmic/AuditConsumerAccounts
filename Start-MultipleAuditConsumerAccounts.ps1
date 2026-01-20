@@ -294,9 +294,11 @@ function Start-MultipleAuditConsumerAccounts
         (Get-Job -state Running | where {$_.name -eq $logFileName}).count -eq 0
     )
 
-    out-logFile -string "Obtained combined addresses to test."
+    out-logfile -string "Validate all jobs completed successfully."
 
     $addressesToTest = get-multipleXMLFiles -fileName $exportNames.addressesToTextXML -baseName $logFileName -logFolderPath $logFolderPath
+
+    out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
 
     start-sleep -s 600
 
@@ -304,7 +306,6 @@ function Start-MultipleAuditConsumerAccounts
 
     $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
 
-    out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
