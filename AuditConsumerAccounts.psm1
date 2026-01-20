@@ -237,7 +237,7 @@ function Start-AuditConsumerAccounts
 
     if ($bringYourOwnAddresses -ne $NULL)
     {
-        out-logfile -string ("Count of users provided: "+$bringYourOwnAddresses.count)
+        out-logfile -string ("Count of addresses provided: "+$bringYourOwnAddresses.count)
     }
     else 
     {
@@ -310,9 +310,9 @@ function Start-AuditConsumerAccounts
 
         $domainsList = $bringYourOwnDomains
     }
-    else 
+    else
     {
-        out-logfile -string "Domains not provided / users provided -> domains must be provided." -isError:$true
+        out-logfile -string "Not necessary to do anything with domains - no user tests performed."
     }
 
     if ($domainsList.count -gt 0)
@@ -322,9 +322,23 @@ function Start-AuditConsumerAccounts
     
     $htmlValues['htmlAddressesToTest']=Get-Date
 
-    $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
+    if ($bringYourOwnAddresses -eq $NULL)
+    {
+        out-logfile -string "Addresses not provided by calling function - proceed with calculating addresses."
 
-    out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
+        $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
+    }
+    else 
+    {
+        out-logfile -string "Addresses provided by calling function - set address list."
+
+        $addressesToTest = $bringYourOwnAddresses
+    }
+
+    if ($addressesToTest.count -gt 0)
+    {
+        out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
+    }
 
     if ($bringYourOwnUsers -ne $NULL)
     {

@@ -266,7 +266,21 @@ function Start-MultipleAuditConsumerAccounts
 
     Clear-PSJob
 
-    create-PSJob -msGraphEnvironmentName $msGraphEnvironmentName -msGraphTenantID $msGraphTenantID -msGraphCertificateThumbprint $msGraphCertificateThumbprint -msGraphApplicationID $msGraphApplicationID -msGraphClientSecret $msGraphClientSecret -msGraphDomainPermissions $msGraphDomainPermissions -msGraphUserPermissions $msGraphUserPermissions -bringYourOwnDomains $bringYourOwnDomains -bringYourOwnUsers $bringYourOwnUsers -logFolderPath $logFolderPath
+    for ($i = 0 ; $i -lt $userList.count ; $i++)
+    {
+        out-logfile -string ("Starting address collection job: "+$i.tostring())
+
+        $jobFolderPath = $logFolderPath + "\" + $logFileName + "\" + $i.toString()
+
+        if ($msGraphValues.msGraphAuthenticationType -eq "Certificate")
+        {
+            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphCertificateThumbprint $args[2] -msGraphApplicationID $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphCertificateThumbprint,$msGraphApplicationID,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+        }
+        elseif ($msGraphValues.msGraphAuthenticationType -eq "ClientSecret")
+        {
+            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+        }    
+    }
 
     test-jobStatus
 
@@ -282,7 +296,21 @@ function Start-MultipleAuditConsumerAccounts
 
     $addressesToTest = get-chunklist -listToChunk $addressesToTest -userBatchSize $userBatchSize
 
-    create-PSJob -msGraphEnvironmentName $msGraphEnvironmentName -msGraphTenantID $msGraphTenantID -msGraphCertificateThumbprint $msGraphCertificateThumbprint -msGraphApplicationID $msGraphApplicationID -msGraphClientSecret $msGraphClientSecret -msGraphDomainPermissions $msGraphDomainPermissions -msGraphUserPermissions $msGraphUserPermissions -bringYourOwnDomains $bringYourOwnDomains -bringYourOwnUsers $bringYourOwnUsers -bringYourOwnDomains $bringYourOwnDomains -logFolderPath $logFolderPath
+    for ($i = 0 ; $i -lt $addressesToTest.count ; $i++)
+    {
+        out-logfile -string ("Starting address collection job: "+$i.tostring())
+
+        $jobFolderPath = $logFolderPath + "\" + $logFileName + "\" + $i.toString()
+
+        if ($msGraphValues.msGraphAuthenticationType -eq "Certificate")
+        {
+            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphCertificateThumbprint $args[2] -msGraphApplicationID $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnAddresses $args[9]} -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphCertificateThumbprint,$msGraphApplicationID,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$addressesToTest
+        }
+        elseif ($msGraphValues.msGraphAuthenticationType -eq "ClientSecret")
+        {
+            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnAddresses $args[9]} -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$addressesToTest
+        }    
+    }
 
     test-jobStatus
 
