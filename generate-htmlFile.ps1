@@ -7,7 +7,7 @@ function Generate-HTMLFile
         [Parameter(Mandatory = $true)]
         $accounts
     )
-
+    
     out-logfile -string "Begin Generate-HTMLFile"
 
     $outputHTML = $global:LogFile.replace("log","html")

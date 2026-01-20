@@ -48,13 +48,7 @@
             [int]$sleepID=0
         )
 
-        #Output all parameters bound or unbound and their associated values.
-
-        write-functionParameters -keyArray $MyInvocation.MyCommand.Parameters.Keys -parameterArray $PSBoundParameters -variableArray (Get-Variable -Scope Local -ErrorAction Ignore)
-
-        Out-LogFile -string "********************************************************************************"
-        Out-LogFile -string "BEGIN  start-sleepProgess"
-        Out-LogFile -string "********************************************************************************"
+        out-logfile -string "Start Start-SleepProgress"
 
         if(($sleepId -eq 0)-and ($sleepParentID -eq 0))
         {
@@ -77,6 +71,5 @@
             Write-Progress -Activity $sleepString -Id $sleepID -ParentId $sleepParentID -Completed
         }
 
-        Out-LogFile -string "END start-sleepProgess"
-        Out-LogFile -string "********************************************************************************"
+        out-logfile -string "End Start-SleepProgress"
     }

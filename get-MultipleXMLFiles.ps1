@@ -18,24 +18,26 @@ function get-MultipleXMLFiles
     out-logfile -string ("Root Path: "+$rootPath)
     out-logfile -string ("File Name: "+$fileName)
 
-    $files = get-ChildItem -path $rootPath -name $fileName -Recurse
+    $files = @(Get-ChildItem -path $rootPath -name $fileName -Recurse)
 
     out-logfile -string ("File Count: "+$files.count.tostring())
 
-    $returnList = [System.Collections.Generic.List[psCustomObject]]::new()
+    $data = @()
 
     foreach ($file in $files)
     {
-        out-logfile -string ("Processing file: "+$file.FullName)
+        out-logfile -string ("Processing file: "+$file)
 
-        $data = Import-Clixml -Path $file.FullName
+        $importFile = $rootPath + $file
+
+        out-logfile -string ("Processing import file: "+$importFile)
+
+        $data += Import-Clixml -Path $importFile
 
         out-logfile -string ("Processing entry count: "+$data.Count.tostring())
-
-        $returnList.add($data)
-
-        out-logfile -string ("Return list count: "+$returnList.Count.tostring())
     }
+
+    $returnList = [System.Collections.Generic.List[psCustomObject]]::new($data)
 
     out-logfile -string ("Return list imported count: "+$returnList.Count.tostring())
 
