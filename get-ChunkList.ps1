@@ -17,13 +17,18 @@ function get-ChunkList
     for ($i = 0; $i -lt $listToChunk.count ; $i += $chunkSize)
     {
         out-logfile -string ("Processing chunk: "+$i.tostring())
-        
+
         $endIndex = [Math]::Min($i + $chunkSize - 1, $listToChunk.Count - 1)
 
         $chunks.Add($listToChunk[$i..$endIndex]) | Out-Null
     }
 
     out-logfile -string ("Count of chunks: "+$chunks.Count)
+
+    foreach ($chunk in $chunks)
+    {
+        out-logfile -string ("Chunk Size: "+$chunk.count.tostring())
+    }
 
     out-logfile -string "End Get-ChunkList"
 
