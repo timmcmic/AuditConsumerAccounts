@@ -264,17 +264,33 @@ function Start-MultipleAuditConsumerAccounts
     {
         out-logfile -string ("Starting address collection job: "+$i.tostring())
 
-        $jobFolderPath = $logFolderPath + "\" +$i.toString()
+        $jobFolderPath = $logFolderPath + "\" + $logFileName + "\" + $i.toString()
 
         if ($msGraphValues.msGraphAuthenticationType -eq "Certificate")
         {
-            Start-ThreadJob -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphCertificateThumbprint $args[2] -msGraphApplicationID $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphCertificateThumbprint,$msGraphApplicationID,$msGraphDomainPermissions,$msGraphUserPermissions,$logFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphCertificateThumbprint $args[2] -msGraphApplicationID $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphCertificateThumbprint,$msGraphApplicationID,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
         }
         elseif ($msGraphValues.msGraphAuthenticationType -eq "ClientSecret")
         {
-            Start-ThreadJob -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$logFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
+            Start-Job -name $logFileName -InitializationScript {Import-Module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -ScriptBlock {Start-AuditConsumerAccounts -msGraphEnvironmentName $args[0] -msGraphTenantID $args[1] -msGraphApplicationID $args[2] -msGraphClientSecret $args[3] -msGraphDomainPermissions $args[4] -msGraphUserPermissions $args[5] -logFolderPath $args[6] -allowTelemetryCollection $args[7] -testPrimarySMTPOnly $args[8] -bringYourOwnDomains $args[9] -bringYourOwnUsers $args[10] } -ArgumentList $msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$jobFolderPath,$allowTelemetryCollection,$testPrimarySMTPOnly,$domainsList,$userlist[$i]
         }    
     }
+
+    do {
+        out-logfile -string "Jobs are not yet completed in this batch."
+
+        $loopJobs = Get-Job -state Running | where {$_.name -eq $logFileName}
+
+        out-logfile -string ("Number of jobs that are running: "+$loopJobs.count.tostring())
+
+        start-sleepProgress -sleepString "Sleeping waiting on job completion." -sleepSeconds 30
+    } until (
+        (Get-Job -state Running | where {$_.name -eq $logFileName}).count -eq 0
+    )
+
+    out-logFile -string "Obtained combined addresses to test."
+
+    $addressesToTest = get-multipleXMLFiles -fileName $exportNames.addressesToTextXML -baseName $logFileName -logFolderPath $logFolderPath
 
     start-sleep -s 600
 
