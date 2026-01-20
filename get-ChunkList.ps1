@@ -3,12 +3,14 @@ function get-ChunkList
     Param
     (
         [Parameter(Mandatory = $true)]
-        $listToChunk
+        $listToChunk,
+        [Parameter(Mandatory = $true)]
+        $userBatchSize
     )
 
     out-logfile -string "Start Get-ChunkList"
 
-    $chunkSize = 1000
+    $chunkSize = $userBatchSize
 
     $chunks = [System.Collections.Generic.List[Object]]::New()
 

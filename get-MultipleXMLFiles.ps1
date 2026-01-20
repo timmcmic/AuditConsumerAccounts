@@ -37,7 +37,7 @@ function get-MultipleXMLFiles
         out-logfile -string ("Processing entry count: "+$data.Count.tostring())
     }
 
-    $returnList = [System.Collections.Generic.List[psCustomObject]]::new($data)
+    $returnList = [System.Collections.Generic.List[psCustomObject]]$data
 
     out-logfile -string ("Return list imported count: "+$returnList.Count.tostring())
 

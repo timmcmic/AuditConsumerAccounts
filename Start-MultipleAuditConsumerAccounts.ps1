@@ -109,7 +109,11 @@ function Start-MultipleAuditConsumerAccounts
         [boolean]$allowTelemetryCollection=$TRUE,
         #Define optional paramters
         [Parameter(Mandatory = $false)]
-        [boolean]$testPrimarySMTPOnly=$false
+        [boolean]$testPrimarySMTPOnly=$false,
+        [Parameter(Mandatory = $false)]
+        [int]$userBatchSize=1000,
+        [Parameter(Mandatory = $false)]
+        [int]$jobThreadCount=5
     )
 
     #Initialize telemetry collection.
@@ -256,7 +260,7 @@ function Start-MultipleAuditConsumerAccounts
 
     $htmlValues['htmlAddressesToTest']=Get-Date
 
-    $userList = get-chunklist -listToChunk $userList
+    $userList = get-chunklist -listToChunk $userList -useBatchSize $userBatchSize
 
     out-logfile -string "Clear any jobs that may exist."
 
