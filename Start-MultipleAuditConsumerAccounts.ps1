@@ -260,7 +260,7 @@ function Start-MultipleAuditConsumerAccounts
 
     $htmlValues['htmlAddressesToTest']=Get-Date
 
-    $userList = get-chunklist -listToChunk $userList -useBatchSize $userBatchSize
+    $userList = get-chunklist -listToChunk $userList -userBatchSize $userBatchSize
 
     out-logfile -string "Clear any jobs that may exist."
 
