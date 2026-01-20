@@ -339,12 +339,9 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
-    if ($bringYourOwnAddresses -ne $NULL)
-    {
-        out-logfile -string "Addresses provided - proceed with consumer testing."
+    out-logfile -string "Addresses provided - proceed with consumer testing."
 
-        $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
-    }
+    $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
 
     if ($consumerAccountList.count -gt 0)
     {

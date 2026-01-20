@@ -10,7 +10,7 @@ function get-AddressesToTest
         $testPrimarySMTPOnly
     )
 
-    out-logfile -string "Being Get-AddressesToTest"
+    out-logfile -string "Begin Get-AddressesToTest"
 
     #Create return list.
 
@@ -145,6 +145,8 @@ function get-AddressesToTest
     out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
     out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
     out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
+
+    out-logfile -string "End Get-AddressToTest"
 
     return $returnList
 }
