@@ -22,10 +22,8 @@ function remove-JobDirectories
     {
         out-logfile -string ("Processing directory: "+$directory)
 
-        $directoryPath = $rootPath + $directory
-
         try {
-            remove-Item -path $directoryPath -Recurse -Force -ErrorAction STOP
+            remove-Item -path $directory -Recurse -Force -ErrorAction STOP
         }
         catch {
             out-logfile -string "Unable to remove a job directory - manual deletion required."
