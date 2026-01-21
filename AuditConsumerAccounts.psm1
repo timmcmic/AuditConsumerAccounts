@@ -369,6 +369,7 @@ function Start-AuditConsumerAccounts
     if ($consumerAccountList.count -gt 0)
     {
         out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+        out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
     }
 
     if ($bringYourOwnAddresses -ne $NULL)
