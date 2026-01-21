@@ -361,7 +361,9 @@ function Start-MultipleAuditConsumerAccounts
         out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
     }
 
-    get-MultipleLogFiles
+    get-MultipleLogFiles -fileName $logFileName -baseName $logFileName -logFolderPath $logFolderPath
+
+    remove-jobDirectories -baseName $logFileName -logFolderPath $logFolderPath
 
     $telemetryValues['telemetryNumberOfUsers']=$telemetryUsers
     $telemetryValues['telemetryNumberofAddresses']=$telemetryAddresses
