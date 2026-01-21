@@ -56,7 +56,7 @@ function Generate-HTMLFile
                 out-logfile -string "Account testing failed - list errors.."
 
                 new-htmlSection -HeaderText ("Consumer Account Failed Queries") {
-                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN) -Filtering -AlphabetSearch{
+                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN,AccountErrorText) -Filtering -AlphabetSearch{
                     } 
                 }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Red"  -CanCollapse -BorderRadius 10px -collapsed
             }

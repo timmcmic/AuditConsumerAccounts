@@ -35,6 +35,7 @@ function get-ConsumerAccounts
             out-logfile -string $_
             
             $account.AccountError = $true
+            $account.AccountErrorText = $_
         }
 
         out-logfile -string "Successfully tested for consumer account."

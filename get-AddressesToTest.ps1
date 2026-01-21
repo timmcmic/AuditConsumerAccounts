@@ -49,6 +49,7 @@ function get-AddressesToTest
                     Address = $user.userPrincipalName
                     AccountPresent = $false
                     AccountError=$false
+                    AccountErrorText = ""
             }
 
             $returnList.add($outputObject) | Out-Null
@@ -63,6 +64,7 @@ function get-AddressesToTest
                     Address = $user.mail
                     AccountPresent = $false
                     AccountError=$false
+                    AccountErrorText = ""
                 }
 
                 $returnList.add($outputObject)
@@ -104,6 +106,7 @@ function get-AddressesToTest
                                 Address = $tempAddress
                                 AccountPresent = $false
                                 AccountError=$false
+                                AccountErrorText = ""
                             }
 
                             $returnList.add($outputObject)

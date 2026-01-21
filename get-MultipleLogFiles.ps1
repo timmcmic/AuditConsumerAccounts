@@ -13,7 +13,7 @@ function get-MultipleLogFiles
     out-logfile -string "Start Get-MultipleLogFiles"
 
     $rootPath = $logFolderPath + "\" + $baseName + "\"
-    $fileName = $baseName+$fileName+".log"
+    $fileName = $fileName+".log"
 
     out-logfile -string ("Root Path: "+$rootPath)
     out-logfile -string ("File Name: "+$fileName)
