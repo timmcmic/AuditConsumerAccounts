@@ -150,7 +150,7 @@ function Start-MultipleAuditConsumerAccounts
     $telemetryValues['telemetryStartTime']=(get-UniversalDateTime)
     $telemetryValues['telemetryEndTime']="None"
     $telemetryValues['telemetryElapsedSeconds']=[double]0
-    $telemetryValues['telemetryEventName']="Start-AuditConsumerAccounts"
+    $telemetryValues['telemetryEventName']="Start-MultipleAuditConsumerAccounts"
     $telemetryValues['telemetryNumberOfUsers']=[double]0
     $telemetryValues['telemetryNumberofAddresses']=[double]0
     $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]0
@@ -182,7 +182,7 @@ function Start-MultipleAuditConsumerAccounts
 
     #Set the execution windows name.
 
-    $windowTitle = "Start-AuditConsumerAccounts"
+    $windowTitle = "Start-MultipleAuditConsumerAccounts"
     $host.ui.RawUI.WindowTitle = $windowTitle
 
     #Define global variables.
