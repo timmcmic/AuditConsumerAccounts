@@ -248,6 +248,8 @@ function Start-MultipleAuditConsumerAccounts
 
     $userList = get-MSGraphUsers
 
+    [double]$telemetryUsers = $userList.count
+
     out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
 
     $htmlValues['htmlGetMSGraphDomains']=Get-Date
@@ -304,6 +306,8 @@ function Start-MultipleAuditConsumerAccounts
 
     $addressesToTest = get-multipleXMLFiles -fileName $exportNames.addressesToTextXML -baseName $logFileName -logFolderPath $logFolderPath
 
+    [double]$telemetryAddresses = $addressesToTest.Count
+
     out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
 
     Clear-PSJob
@@ -357,8 +361,10 @@ function Start-MultipleAuditConsumerAccounts
         out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
     }
 
-    $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
-    $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
+    get-MultipleLogFiles
+
+    $telemetryValues['telemetryNumberOfUsers']=$telemetryUsers
+    $telemetryValues['telemetryNumberofAddresses']=$telemetryAddresses
     $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]$consumerAccountList.Count
     $telemetryValues['telemetryEndTime']=(Get-UniversalDateTime)
     $telemetryValues['telemetryElapsedSeconds']=[double](Get-ElapsedTime -startTime $telemetryValues['telemetryStartTime'] -endTime  $telemetryValues['telemetryEndTime'])

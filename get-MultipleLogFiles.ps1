@@ -1,4 +1,4 @@
-function get-MultipleXMLFiles
+function get-MultipleLogFiles
 {
     Param
     (
@@ -58,5 +58,5 @@ function get-MultipleXMLFiles
         }
     }
         
-    out-logfile -string "End Get-MultipleXMLFiles"
+    out-logfile -string "End Get-MultipleLogFiles"
 }
