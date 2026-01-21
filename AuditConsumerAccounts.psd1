@@ -74,7 +74,7 @@ RequiredModules = @(
 # FormatsToProcess = @()
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @('test-jobStatus.ps1','validate-jobStatus.ps1','Start-SleepProgress.ps1','get-MultipleXMLFiles.ps1','Clear-PSJob.ps1','Get-ChunkList.ps1','Start-MultipleAuditConsumerAccounts.ps1','send-TelemetryEvent.ps1','Get-ElapsedTime.ps1','Generate-HTMLFile.ps1','Get-ConsumerAccounts.ps1','Out-CSVFile.ps1','Get-AddressesToTest.ps1','Get-MSGraphDomains.ps1','Out-XMLFile.ps1','Get-MSGraphusers.ps1','Verify-GraphConnection.ps1','New-GraphConnection.ps1','Write-FunctionParameters.ps1','Test-PowerShellModule.ps1','Disable-AllPowershellSessions.ps1','Get-UniversalDateTime.ps1','New-LogFile.ps1','Out-LogFile.ps1','Start-TelemetryConfiguration.ps1')
+NestedModules = @('get-multipleLogFiles.ps1','test-jobStatus.ps1','validate-jobStatus.ps1','Start-SleepProgress.ps1','get-MultipleXMLFiles.ps1','Clear-PSJob.ps1','Get-ChunkList.ps1','Start-MultipleAuditConsumerAccounts.ps1','send-TelemetryEvent.ps1','Get-ElapsedTime.ps1','Generate-HTMLFile.ps1','Get-ConsumerAccounts.ps1','Out-CSVFile.ps1','Get-AddressesToTest.ps1','Get-MSGraphDomains.ps1','Out-XMLFile.ps1','Get-MSGraphusers.ps1','Verify-GraphConnection.ps1','New-GraphConnection.ps1','Write-FunctionParameters.ps1','Test-PowerShellModule.ps1','Disable-AllPowershellSessions.ps1','Get-UniversalDateTime.ps1','New-LogFile.ps1','Out-LogFile.ps1','Start-TelemetryConfiguration.ps1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @('Start-MultipleAuditConsumerAccounts','Start-AuditConsumerAccounts')

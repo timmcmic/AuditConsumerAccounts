@@ -16,5 +16,5 @@ function validate-jobStatus
         out-logfile -string "Job Failed" -isError:$TRUE
     }
 
-    out-logfile -string "End Validate-JobStatus"
+    out-logfile -string "End"
 }

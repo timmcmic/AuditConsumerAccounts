@@ -32,7 +32,14 @@ function get-MultipleXMLFiles
 
         out-logfile -string ("Processing import file: "+$importFile)
 
-        $data += Import-Clixml -Path $importFile
+        try {
+            $data += Import-Clixml -Path $importFile -errorAction STOP
+
+        }
+        catch {
+            out-logfile -string "Unable to obtain the contents of the XML file."
+            out-logfile -string $_ -isError:$TRUE
+        }
 
         out-logfile -string ("Processing entry count: "+$data.Count.tostring())
     }
