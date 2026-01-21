@@ -14,7 +14,7 @@ function remove-JobDirectories
 
     out-logfile -string ("Root Path: "+$rootPath)
 
-    $directories = @(Get-ChildItem -path $rootPath -directory -depth 1)
+    $directories = @(Get-ChildItem -path $rootPath -directory)
 
     out-logfile -string ("Directory Count: "+$directories.count.tostring())
 
