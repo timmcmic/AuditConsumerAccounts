@@ -24,9 +24,9 @@ function get-MultipleXMLFiles
 
     for ($i = 0 ; $i -lt $files.count ; $i++)
     {
-        out-logfile -string ("Processing file: "+$file)
+        out-logfile -string ("Processing file: "+$files[$i])
 
-        $importFile = $rootPath + $file
+        $importFile = $rootPath + $files[$i]
 
         if ($importFile -ne $global:LogFile)
         {
