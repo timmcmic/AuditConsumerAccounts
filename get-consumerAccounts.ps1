@@ -45,15 +45,15 @@ function get-ConsumerAccounts
             out-logfile -string "A consumer account is present."
 
             $account.AccountPresent = $true
+
+            $returnList.add($account)
         }
         else 
         {
-            $account.AccountPresent = $false
-
             out-logfile -string "A consumer account is not present."
         }
 
-        $returnList.add($account)
+        
     }
 
     write-progress -activity "Processing Recipient" -completed
