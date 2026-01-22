@@ -48,12 +48,16 @@ function get-ConsumerAccounts
 
             $returnList.add($account)
         }
+        elseif ($account.AccountError -eq $TRUE) 
+        {
+            out-logfile -string "A consumer account is not presenet but account is in error - add."
+
+            $returnList.add($account)
+        }
         else 
         {
-            out-logfile -string "A consumer account is not present."
+            out-logfile -string "A consumer account is not present and the account is not in error - skip."
         }
-
-        
     }
 
     write-progress -activity "Processing Recipient" -completed
