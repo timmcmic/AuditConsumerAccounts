@@ -206,6 +206,10 @@ function Start-MultipleAuditConsumerAccounts
     out-logfile -string "BEGIN Start-MultipleAuditConsumerAccounts"
     out-logfile -string "==============================================================="
 
+    out-logfile -string "Ensuring that no job directories from previous runs exist."
+
+    remove-JobDirectories
+
     out-logfile -string "Testing for supported graph authentication method."
 
     out-logfile -string $msGraphValues.msGraphAuthenticationType
