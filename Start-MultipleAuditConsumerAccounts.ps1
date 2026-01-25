@@ -208,7 +208,7 @@ function Start-MultipleAuditConsumerAccounts
 
     out-logfile -string "Ensuring that no job directories from previous runs exist."
 
-    remove-JobDirectories
+    remove-jobDirectories -baseName $logFileName -logFolderPath $logFolderPath
 
     out-logfile -string "Testing for supported graph authentication method."
 
