@@ -200,6 +200,8 @@ function Start-MultipleAuditConsumerAccounts
 
     #Start the log file.
 
+    remove-jobFiles -baseName $logFileName -logFolderPath $logFolderPath
+
     new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
 
     out-logfile -string "==============================================================="
