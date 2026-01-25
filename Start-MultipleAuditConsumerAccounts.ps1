@@ -206,10 +206,6 @@ function Start-MultipleAuditConsumerAccounts
     out-logfile -string "BEGIN Start-MultipleAuditConsumerAccounts"
     out-logfile -string "==============================================================="
 
-    out-logfile -string "Ensuring that no job directories from previous runs exist."
-
-    remove-jobDirectories -baseName $logFileName -logFolderPath $logFolderPath
-
     out-logfile -string "Testing for supported graph authentication method."
 
     out-logfile -string $msGraphValues.msGraphAuthenticationType
@@ -271,6 +267,10 @@ function Start-MultipleAuditConsumerAccounts
     out-logfile -string "Clear any jobs that may exist."
 
     Clear-PSJob
+
+    out-logfile -string "Clear any job directories that may exist."
+
+    remove-jobDirectories -baseName $logFileName -logFolderPath $logFolderPath
 
     for ($i = 0 ; $i -lt $userList.count ; $i++)
     {
