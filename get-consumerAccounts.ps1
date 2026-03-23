@@ -60,6 +60,8 @@ function get-ConsumerAccounts
         }
     }
 
+    Start-Sleep -s 2
+
     write-progress -activity "Processing Recipient" -completed
 
     $returnList = $returnlist | where {($_.accountError -eq $TRUE) -or ($_.AccountPresent -eq $true)}
