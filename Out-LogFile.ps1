@@ -66,8 +66,7 @@ Function Out-LogFile
 
         disable-allPowerShellSessions
 
-        Write-Host "Press return to exit"
-        $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        Read-Host "Press any key to continue..."
 
         exit
     }

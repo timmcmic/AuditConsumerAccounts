@@ -40,7 +40,7 @@ function Generate-HTMLFile
                 out-logfile -string "Consumer accounts were present - generate table."
 
                 new-htmlSection -HeaderText ("Consumer Account Summary Report") {
-                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN) -Filtering -AlphabetSearch{
+                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN,RequestID) -Filtering -AlphabetSearch{
                     } 
                 }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Blue"  -CanCollapse -BorderRadius 10px -collapsed
             }

@@ -208,23 +208,14 @@ function Start-AuditConsumerAccounts
     out-logfile -string "==============================================================="
 
     $htmlValues['htmlStartPowershellValidation']=Get-Date
-
-    if(($bringYourOwnUsers -eq $null) -and ($bringYourOwnAddresses -eq $null))
-    {
-        out-logfile -string "Begin powershell validation."
-
-        $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
-        $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
-        $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
-        $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
-        $telemetryValues['telemetryAuditConsumerAccounts']=Test-PowerShellModule -powershellModuleName $powershellModules.AuditConsumerAccounts -powershellVersionTest:$TRUE
-        $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
-        $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
-    }
-    else 
-    {
-        out-logfile -string "Powershell validation not required."
-    }
+    
+    $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryAuditConsumerAccounts']=Test-PowerShellModule -powershellModuleName $powershellModules.AuditConsumerAccounts -powershellVersionTest:$TRUE
+    $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
+    $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
     if ($bringYourOwnDomains -ne $NULL)
     {
@@ -257,48 +248,15 @@ function Start-AuditConsumerAccounts
 
     out-logfile -string "Establish graph connection."
 
-    if(($bringYourOwnUsers -eq $null) -and ($bringYourOwnAddresses -eq $null))
-    {
-        out-logfile -string "Users or addresses not provided - graph connection required."
-
-        new-graphConnection -graphHashTable $msGraphValues
-    }
-    else 
-    {
-        out-logfile -string "Users or addresses provided - graph connection not required."
-    }
+    new-graphConnection -graphHashTable $msGraphValues
 
     $htmlValues['htmlVerifyMSGraph']=Get-Date
 
-    if(($bringYourOwnUsers -eq $null) -and ($bringYourOwnAddresses -eq $null))
-    {
-        out-logfile -string "Users or addresses not provdied - verify graph connection required."
-
-        verify-graphConnection -graphHashTable $msGraphValues
-    }
-    else 
-    {
-        out-logfile -string "Users or addresses provided - verify graph connection not required."
-    }
+    verify-graphConnection -graphHashTable $msGraphValues
 
     $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
-    if(($bringYourOwnUsers -eq $null) -and ($bringYourOwnAddresses -eq $null))
-    {
-        out-logfile -string "Users or addresses not provided - obtain users required."
-
-        $userList = get-MSGraphUsers
-    }
-    elseif($bringYourOwnUsers -ne $NULL) 
-    {
-        out-logfile -string "Users provided - set userlist."
-
-        $userList = $bringYourOwnUsers
-    }
-    else 
-    {
-        out-logfile -string "Addresses provided - skip user list."
-    }
+    $userList = get-MSGraphUsers
     
     if ($userList.count -gt 0)
     {
@@ -307,22 +265,7 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlGetMSGraphDomains']=Get-Date
 
-    if (($bringYourOwnDomains -eq $NULL) -and ($bringYourOwnUsers -eq $NULL) -and ($bringYourOwnAddresses -eq $null))
-    {
-        out-logfile -string "Domains not provided - obtain domains."
-
-        $domainsList = get-msGraphDomains
-    }
-    elseif (($bringYourOwnDomains -ne $null) -and ($bringYourOwnUsers -ne $null)) 
-    {
-        out-logfile -string "Domains provided - skip domains list"
-
-        $domainsList = $bringYourOwnDomains
-    }
-    else
-    {
-        out-logfile -string "Not necessary to do anything with domains - no user tests performed."
-    }
+    $domainsList = get-msGraphDomains
 
     if ($domainsList.count -gt 0)
     {
@@ -331,33 +274,11 @@ function Start-AuditConsumerAccounts
     
     $htmlValues['htmlAddressesToTest']=Get-Date
 
-    if ($bringYourOwnAddresses -eq $NULL)
-    {
-        out-logfile -string "Addresses not provided by calling function - proceed with calculating addresses."
-
-        $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
-    }
-    else 
-    {
-        out-logfile -string "Addresses provided by calling function - set address list."
-
-        $addressesToTest = $bringYourOwnAddresses
-    }
+    $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
 
     if ($addressesToTest.count -gt 0)
     {
         out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
-    }
-
-    if ($bringYourOwnUsers -ne $NULL)
-    {
-        out-logfile -string "User tests concluded - exit to calling function."
-
-        exit
-    }
-    else 
-    {
-        out-logfile -string "Multiple tests not run - proceed to consumer tests."
     }
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
@@ -370,17 +291,6 @@ function Start-AuditConsumerAccounts
     {
         out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
         out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
-    }
-
-    if ($bringYourOwnAddresses -ne $NULL)
-    {
-        out-logfile -string "Consumer testing concluded - exit to calling function"
-
-        exit
-    }
-    else 
-    {
-        out-logfile -string "Multiple tests not run - proceed to reporting"
     }
 
     $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count

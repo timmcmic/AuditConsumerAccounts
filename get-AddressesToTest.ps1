@@ -50,6 +50,8 @@ function get-AddressesToTest
                     AccountPresent = $false
                     AccountError=$false
                     AccountErrorText = ""
+                    RequestID = ""
+                    Server = ""
             }
 
             $returnList.add($outputObject) | Out-Null
@@ -65,6 +67,8 @@ function get-AddressesToTest
                     AccountPresent = $false
                     AccountError=$false
                     AccountErrorText = ""
+                    RequestID = ""
+                    Server = ""
                 }
 
                 $returnList.add($outputObject)
@@ -107,6 +111,8 @@ function get-AddressesToTest
                                 AccountPresent = $false
                                 AccountError=$false
                                 AccountErrorText = ""
+                                RequestID = ""
+                                Server = ""
                             }
 
                             $returnList.add($outputObject)

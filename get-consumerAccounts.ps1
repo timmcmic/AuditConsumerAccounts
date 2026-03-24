@@ -1,6 +1,13 @@
 function get-ConsumerAccounts
 {
-   Function Do-It {
+    Param
+    (
+        [Parameter(Mandatory = $true)]
+        $accountList
+    )
+
+    Function Do-It 
+    {
 
     [CmdletBinding()]
     param(
@@ -9,12 +16,10 @@ function get-ConsumerAccounts
     )
         get-msIdHasMicrosoftAccount -mail $address -Debug
     }
- 
-   Param
-    (
-        [Parameter(Mandatory = $true)]
-        $accountList
-    )
+
+    $firstSplitValue = "x-ms-request-id:"
+    $secondSplitValue = "x-ms-ests-server:"
+    $thirdValue = "`r"
 
     out-logfile -string "Begin Get-ConsumerAccounts"
 
@@ -39,15 +44,41 @@ function get-ConsumerAccounts
 
         try {
             #$test = get-msIdHasMicrosoftAccount -mail $account.Address -ErrorAction STOP
-            $test = Do-It -address $account.address
+            $result = Do-It -address $account.address -Debug 5>&1
+            $test = $result | where { $_ -isnot [System.Management.Automation.DebugRecord] }
+            $debugEntry = $result | where { $_ -is [System.Management.Automation.DebugRecord] }
+
+            $debugEntry = $debugEntry.message.split($thirdValue)
+
+            foreach ($entry in $debugEntry)
+            {
+                if ($entry.contains($firstSplitValue))
+                {
+                    $entry = $entry.split(": ")
+                    $account.RequestID = $entry[1]
+                }
+
+                if ($entry.contains($secondSplitValue))
+                {
+                    $entry = $entry.split(": ")
+                    $account.server = $entry[1]
+                }
+            }
+
+            out-logfile -string $account.RequestID
+            out-logfile -string $account.Server
         }
         catch {
-            out-logfile -string "Unable to test for presence of commercial account."
+            out-logfile -string "Ufonable to test for presence of commercial account."
             out-logfile -string $_
             
             $account.AccountError = $true
             $account.AccountErrorText = $_
+            $account.RequestID = "Error"
+            $account.server = "Error"
         }
+
+        out-logfile -string "Parse debug entry."
 
         out-logfile -string "Successfully tested for consumer account."
 
