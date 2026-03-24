@@ -101,7 +101,7 @@ function get-ConsumerAccounts
             out-logfile -string "A consumer account is not present and the account is not in error - skip."
         }
 
-        Start-Sleep -s 2
+        #Start-Sleep -s 2
     }
 
     write-progress -activity "Processing Recipient" -completed
