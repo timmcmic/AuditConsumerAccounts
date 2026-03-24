@@ -43,30 +43,7 @@ function get-ConsumerAccounts
         $PercentComplete += $ProgressDelta
 
         try {
-            #$test = get-msIdHasMicrosoftAccount -mail $account.Address -ErrorAction STOP
-            $result = Do-It -address $account.address -Debug 5>&1
-            $test = $result | where { $_ -isnot [System.Management.Automation.DebugRecord] }
-            $debugEntry = $result | where { $_ -is [System.Management.Automation.DebugRecord] }
-
-            $debugEntry = $debugEntry.message.split($thirdValue)
-
-            foreach ($entry in $debugEntry)
-            {
-                if ($entry.contains($firstSplitValue))
-                {
-                    $entry = $entry.split(": ")
-                    $account.RequestID = $entry[1]
-                }
-
-                if ($entry.contains($secondSplitValue))
-                {
-                    $entry = $entry.split(": ")
-                    $account.server = $entry[1]
-                }
-            }
-
-            out-logfile -string $account.RequestID
-            out-logfile -string $account.Server
+            $result = Get-MSIDReliableStatus -userEmail $account.address -errorAction STOP -debug 5>&1
         }
         catch {
             out-logfile -string "Ufonable to test for presence of commercial account."
@@ -78,7 +55,28 @@ function get-ConsumerAccounts
             $account.server = "Error"
         }
 
-        out-logfile -string "Parse debug entry."
+        $test = $result | where { $_ -isnot [System.Management.Automation.DebugRecord] }
+        $debugEntry = $result | where { $_ -is [System.Management.Automation.DebugRecord] }
+
+        $debugEntry = $debugEntry.message.Split($thirdValue)
+
+        foreach ($entry in $debugEntry)
+        {
+            if ($entry.contains($firstSplitValue))
+            {
+                $entry = $entry.split(": ")
+                $account.RequestID = $entry[1]
+            }
+
+            if ($entry.contains($secondSplitValue))
+            {
+                $entry = $entry.split(": ")
+                $account.server = $entry[1]
+            }
+        }
+
+        out-logfile -string $account.RequestID
+        out-logfile -string $account.Server
 
         out-logfile -string "Successfully tested for consumer account."
 
