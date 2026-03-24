@@ -1,5 +1,15 @@
 function get-ConsumerAccounts
 {
+   Function Do-It {
+
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        $address
+    )
+        get-msIdHasMicrosoftAccount -mail $address -Debug
+    }
+ 
    Param
     (
         [Parameter(Mandatory = $true)]
@@ -28,7 +38,8 @@ function get-ConsumerAccounts
         $PercentComplete += $ProgressDelta
 
         try {
-            $test = get-msIdHasMicrosoftAccount -mail $account.Address -ErrorAction STOP
+            #$test = get-msIdHasMicrosoftAccount -mail $account.Address -ErrorAction STOP
+            $test = Do-It -address $account.address
         }
         catch {
             out-logfile -string "Unable to test for presence of commercial account."
