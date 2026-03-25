@@ -1,15 +1,15 @@
 function Get-MsIdReliableStatus {
     param(
         [Parameter(Mandatory=$true)]
-        [string]$outputObject
+        $outputObject
     )
 
     $url = "https://login.microsoftonline.com/common/userrealm?user=$([uri]::EscapeDataString($outputObject.address))&api-version=2.1&checkForMicrosoftAccount=True"
 
     out-logfile -string $url
 
-    $r = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10
-    $data = $r.Content | ConvertFrom-Json
+    $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10
+    $data = $response.Content | ConvertFrom-Json
 
     $status = $false
 
@@ -24,6 +24,10 @@ function Get-MsIdReliableStatus {
     $outputObject.accountPresent = $status
     $outputObject.requestID = $response.Headers["x-ms-request-id"]
     $outputObject.TimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+    out-logfile -string $outputObject.accountPresent
+    out-logfile -string $outputObject.requestID
+    out-logfile -string $outputObject.TimeStamp
 
     return $outputObject
 }

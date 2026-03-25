@@ -6,21 +6,6 @@ function get-ConsumerAccounts
         $accountList
     )
 
-    Function Do-It 
-    {
-
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        $address
-    )
-        get-msIdHasMicrosoftAccount -mail $address -Debug
-    }
-
-    $firstSplitValue = "x-ms-request-id:"
-    $secondSplitValue = "x-ms-ests-server:"
-    $thirdValue = "`r"
-
     out-logfile -string "Begin Get-ConsumerAccounts"
 
     #Create return list.
@@ -52,7 +37,7 @@ function get-ConsumerAccounts
             $account.AccountError = $true
             $account.AccountErrorText = $_
             $account.RequestID = "Error"
-            $account.server = "Error"
+            $account.timestamp = "None"
         }
 
         out-logfile -string "Successfully tested for consumer account."
