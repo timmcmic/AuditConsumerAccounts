@@ -23,7 +23,7 @@ function Get-MsIdReliableStatus {
 
     $outputObject.accountPresent = $status
     $outputObject.requestID = $response.Headers["x-ms-request-id"]
-    $outputObject.TimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $outputObject.TimeStamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
 
     out-logfile -string $outputObject.accountPresent
     out-logfile -string $outputObject.requestID
