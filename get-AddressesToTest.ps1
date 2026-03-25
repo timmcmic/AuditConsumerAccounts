@@ -51,7 +51,7 @@ function get-AddressesToTest
                     AccountError=$false
                     AccountErrorText = ""
                     RequestID = ""
-                    Server = ""
+                    TimeStamp = ""
             }
 
             $returnList.add($outputObject) | Out-Null
@@ -68,7 +68,7 @@ function get-AddressesToTest
                     AccountError=$false
                     AccountErrorText = ""
                     RequestID = ""
-                    Server = ""
+                    TimeStamp = ""
                 }
 
                 $returnList.add($outputObject)
@@ -112,7 +112,7 @@ function get-AddressesToTest
                                 AccountError=$false
                                 AccountErrorText = ""
                                 RequestID = ""
-                                Server = ""
+                                TimeStamp = ""
                             }
 
                             $returnList.add($outputObject)

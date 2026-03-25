@@ -43,10 +43,10 @@ function get-ConsumerAccounts
         $PercentComplete += $ProgressDelta
 
         try {
-            $result = Get-MSIDReliableStatus -userEmail $account.address -errorAction STOP -debug 5>&1
+            $account = Get-MSIDReliableStatus -outputObject $account -errorAction STOP
         }
         catch {
-            out-logfile -string "Ufonable to test for presence of commercial account."
+            out-logfile -string "Unable to test for presence of commercial account."
             out-logfile -string $_
             
             $account.AccountError = $true
@@ -55,51 +55,11 @@ function get-ConsumerAccounts
             $account.server = "Error"
         }
 
-        $test = $result | where { $_ -isnot [System.Management.Automation.DebugRecord] }
-        $debugEntry = $result | where { $_ -is [System.Management.Automation.DebugRecord] }
-
-        $debugEntry = $debugEntry.message.Split($thirdValue)
-
-        foreach ($entry in $debugEntry)
-        {
-            if ($entry.contains($firstSplitValue))
-            {
-                $entry = $entry.split(": ")
-                $account.RequestID = $entry[1]
-            }
-
-            if ($entry.contains($secondSplitValue))
-            {
-                $entry = $entry.split(": ")
-                $account.server = $entry[1]
-            }
-        }
-
-        out-logfile -string $account.RequestID
-        out-logfile -string $account.Server
-
         out-logfile -string "Successfully tested for consumer account."
 
-        if ($test -eq $TRUE)
-        {
-            out-logfile -string "A consumer account is present."
+        $returnList.add($account)
 
-            $account.AccountPresent = $true
-
-            $returnList.add($account)
-        }
-        elseif ($account.AccountError -eq $TRUE) 
-        {
-            out-logfile -string "A consumer account is not presenet but account is in error - add."
-
-            $returnList.add($account)
-        }
-        else 
-        {
-            out-logfile -string "A consumer account is not present and the account is not in error - skip."
-        }
-
-        #Start-Sleep -s 2
+        Start-Sleep -m 200
     }
 
     write-progress -activity "Processing Recipient" -completed
