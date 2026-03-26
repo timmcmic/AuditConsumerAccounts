@@ -4,12 +4,23 @@ function Get-MsIdReliableStatus {
         $outputObject
     )
 
-    $url = "https://login.microsoftonline.com/common/userrealm?user=$([uri]::EscapeDataString($outputObject.address))&api-version=2.1&checkForMicrosoftAccount=True"
+    $url = "https://login.microsoftonline.com/common/userrealm?user=$([uri]::EscapeDataString($outputObject.address))&api-version=2.1&checkForMicrosoftAccount=True" -errorAction STOP
 
     out-logfile -string $url
 
     $outputObject.TimeStamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
-    $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10
+
+    try {
+        $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10
+    }
+    catch {
+        out-logfile -string "Unable to test for presence of commercial account."
+        out-logfile -string $_
+            
+        $outputObject.AccountError = $true
+        $outputObject.AccountErrorText = $_
+    }
+
     $data = $response.Content | ConvertFrom-Json
 
     $status = $false
@@ -30,4 +41,8 @@ function Get-MsIdReliableStatus {
     out-logfile -string $outputObject.TimeStamp
 
     return $outputObject
+
+
+
+     
 }

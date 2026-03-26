@@ -27,18 +27,7 @@ function get-ConsumerAccounts
 
         $PercentComplete += $ProgressDelta
 
-        try {
-            $account = Get-MSIDReliableStatus -outputObject $account -errorAction STOP
-        }
-        catch {
-            out-logfile -string "Unable to test for presence of commercial account."
-            out-logfile -string $_
-            
-            $account.AccountError = $true
-            $account.AccountErrorText = $_
-            $account.RequestID = "Error"
-            $account.timestamp = "None"
-        }
+        $account = Get-MSIDReliableStatus -outputObject $account -errorAction STOP
 
         out-logfile -string "Successfully tested for consumer account."
 
