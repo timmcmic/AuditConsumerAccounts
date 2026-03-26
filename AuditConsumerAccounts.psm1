@@ -208,6 +208,9 @@ function Start-AuditConsumerAccounts
     $addressesToTest
     $consumerAccountList
 
+    $chunkList = $null
+    $chunkSize = 50
+
     #Start the log file.
 
     new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
