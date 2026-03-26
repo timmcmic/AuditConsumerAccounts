@@ -115,9 +115,7 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         $bringYourOwnUsers=$NULL,
         [Parameter(Mandatory = $false)]
-        $bringYourOwnAddresses=$NULL,
-        [Parameter(Mandatory = $false)]
-        $jobNumber=$NULL
+        $bringYourOwnAddresses=$NULL
     )
 
     #Initialize telemetry collection.
@@ -191,14 +189,7 @@ function Start-AuditConsumerAccounts
 
     #Define global variables.
 
-    if ($jobNumber -eq $null)
-    {
-        [string]$global:staticFolderName="\AuditConsumerAccounts\"
-    }
-    else 
-    {
-        [string]$global:staticFolderName="\AuditConsumerAccounts\"+$jobNumber.tostring()+"\"
-    }
+    [string]$global:staticFolderName="\AuditConsumerAccounts\"
 
     #Define local variables.
 
@@ -207,9 +198,6 @@ function Start-AuditConsumerAccounts
     $domainsList
     $addressesToTest
     $consumerAccountList
-
-    $chunkList = [System.Collections.Generic.List[psCustomObject]]::new()
-    $chunkListSize = 100
 
     #Start the log file.
 
@@ -258,102 +246,40 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlStartMSGraph']=Get-Date
 
-    if (($bringYourOwnUsers -eq $NULL) -and ($bringYourOwnDomains -eq $null))
+    out-logfile -string "Establish graph connection."
+
+    new-graphConnection -graphHashTable $msGraphValues
+
+    $htmlValues['htmlVerifyMSGraph']=Get-Date
+
+    verify-graphConnection -graphHashTable $msGraphValues
+
+    $htmlValues['htmlGetMSGraphUsers']=Get-Date
+
+    $userList = get-MSGraphUsers
+    
+    if ($userList.count -gt 0)
     {
-        out-logfile -string "Establish graph connection."
-
-        new-graphConnection -graphHashTable $msGraphValues
-
-        verify-graphConnection -graphHashTable $msGraphValues
-
-        $htmlValues['htmlGetMSGraphUsers']=Get-Date
-
-        $userList = get-MSGraphUsers
-
-        if ($userList.count -gt 0)
-        {
-            out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
-        }
-
-        $htmlValues['htmlGetMSGraphDomains']=Get-Date
-
-        $domainsList = get-msGraphDomains
-
-        if ($domainsList.count -gt 0)
-        {
-            out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
-        }
-
-        $htmlValues['htmlAddressesToTest']=Get-Date
-
-        $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
-
-        if ($addressesToTest.count -gt 0)
-        {
-        out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
-        }
-
-        $htmlValues['htmlChunkAddresses']=Get-Date
-
-        if ($addressToTest.count -gt $chunkListSize)
-        {
-            out-logfile -string "Number of addresses are > minimum chunk size - use jobs."
-
-            try {
-                $chunkList = get-chunkList -listToChunk $addressesToTest -userBatchSize $chunkListSize -errorAction STOP
-            }
-            catch {
-                out-logfile -string $_
-                out-logfile -string "Unable to generate the chunked lists." -isError:$true
-            }
-
-            for ($i = 0 ; $i -lt $chunkList.count ; $i++)
-            {
-                $tempLogPath = 
-
-                try {
-                    
-                    Start-AuditConsumerAccounts -logFolderPath 
-                }
-                catch {
-                    <#Do this if a terminating exception happens#>
-                }
-            }
-        }
-    }
-    else 
-    {
-        out-logfile -string "Skipping graph connection -> not required."
-        out-logfile -string "Skipping graph validation -> not required."
-        $htmlValues['htmlVerifyMSGraph']=Get-Date
-        out-logfile -string "Skipping obtaining users via graph -> not required."
-        $htmlValues['htmlGetMSGraphUsers']=Get-Date
-        out-logfile -string "Skipping getting domains via graph -> not required."
-        $htmlValues['htmlGetMSGraphDomains']=Get-Date
-
-        $domainsList = $bringYourOwnDomains
-
-        if ($domainsList.count -gt 0)
-        {
-            out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
-        }
-
-        out-logfile -string "SKipping getting addresses to test -> not required."
-        $htmlValues['htmlAddressesToTest']=Get-Date
-
-        $addressesToTest = $bringYourOwnUsers
-        $userList = $bringYourOwnUsers
-
-        if ($addressesToTest.count -gt 0)
-        {
-        out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
-        }
-
-        out-logfile -string "Skipping chunking of addresses -> not required."
-        $htmlValues['htmlChunkAddresses']=Get-Date
+        out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
     }
 
-    start-sleep -Seconds 900
+    $htmlValues['htmlGetMSGraphDomains']=Get-Date
+
+    $domainsList = get-msGraphDomains
+
+    if ($domainsList.count -gt 0)
+    {
+        out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
+    }
+    
+    $htmlValues['htmlAddressesToTest']=Get-Date
+
+    $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
+
+    if ($addressesToTest.count -gt 0)
+    {
+        out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
+    }
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
