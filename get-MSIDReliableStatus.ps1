@@ -4,14 +4,14 @@ function Get-MsIdReliableStatus {
         $outputObject
     )
 
-    $url = "https://login.microsoftonline.com/common/userrealm?user=$([uri]::EscapeDataString($outputObject.address))&api-version=2.1&checkForMicrosoftAccount=True" -errorAction STOP
+    $url = "https://login.microsoftonline.com/common/userrealm?user=$([uri]::EscapeDataString($outputObject.address))&api-version=2.1&checkForMicrosoftAccount=True"
 
     out-logfile -string $url
 
     $outputObject.TimeStamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
 
     try {
-        $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10
+        $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10 -errorAction STOP
     }
     catch {
         out-logfile -string "Unable to test for presence of commercial account."
@@ -41,8 +41,4 @@ function Get-MsIdReliableStatus {
     out-logfile -string $outputObject.TimeStamp
 
     return $outputObject
-
-
-
-     
 }

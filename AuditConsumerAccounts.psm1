@@ -199,6 +199,9 @@ function Start-AuditConsumerAccounts
     $addressesToTest
     $consumerAccountList
 
+    $chunkList = [System.Collections.Generic.List[psCustomObject]]::new()
+    $chunkListSize = 1000
+
     #Start the log file.
 
     new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
@@ -280,6 +283,24 @@ function Start-AuditConsumerAccounts
     {
         out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
     }
+
+    $htmlValues['htmlChunkAddresses']=Get-Date
+
+    try {
+        $chunkList = get-chunkList -listToChunk $addressesToTest -userBatchSize $chunkListSize -errorAction STOP
+    }
+    catch {
+        out-logfile -string $_
+        out-logfile -string "Unable to generate the chunked lists." -isError:$true
+    }
+
+    out-logfile -string $chunkList.count
+    foreach ($chunk in $chunkList)
+    {
+        out-logfile -string $chunk.count
+    }
+
+    start-sleep -Seconds 900
 
     $htmlValues['htmlConsumerAccountTest']=Get-Date
 
