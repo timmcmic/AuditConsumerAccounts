@@ -8,6 +8,7 @@ function Get-MsIdReliableStatus {
 
     out-logfile -string $url
 
+    $outputObject.TimeStamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
     $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10
     $data = $response.Content | ConvertFrom-Json
 
@@ -23,7 +24,6 @@ function Get-MsIdReliableStatus {
 
     $outputObject.accountPresent = $status
     $outputObject.requestID = $response.Headers["x-ms-request-id"]
-    $outputObject.TimeStamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
 
     out-logfile -string $outputObject.accountPresent
     out-logfile -string $outputObject.requestID
