@@ -119,7 +119,9 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [array]$bringYourOwnAddresses=@(),
         [Parameter(Mandatory = $false)]
-        [array]$bringYourOwnDomains=@()
+        [array]$bringYourOwnDomains=@(),
+        [Parameter(Mandatory = $false)]
+        $jobNumber = $null
     )
 
     #Initialize telemetry collection.
@@ -242,117 +244,132 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryTelemetry']=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
     $telemetryValues['telemetryHTML']=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
-    if (($recursiveAddresses -ne $NULL) -and ($recursiveDomains -ne $null))
+    if (($recursiveAddresses -eq $NULL) -and ($recursiveDomains -eq $null))
     {
         $htmlValues['htmlStartMSGraph']=Get-Date
 
-            out-logfile -string "Establish graph connection."
+        out-logfile -string "Establish graph connection."
 
-            new-graphConnection -graphHashTable $msGraphValues
+        new-graphConnection -graphHashTable $msGraphValues
 
-            $htmlValues['htmlVerifyMSGraph']=Get-Date
+        $htmlValues['htmlVerifyMSGraph']=Get-Date
 
-            verify-graphConnection -graphHashTable $msGraphValues
+        verify-graphConnection -graphHashTable $msGraphValues
 
-            $htmlValues['htmlGetMSGraphUsers']=Get-Date
+        $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
-            if ($bringYourOwnAddresses.count -eq 0)
-            {
-                $userList = get-MSGraphUsers
+        if ($bringYourOwnAddresses.count -eq 0)
+        {
+            $userList = get-MSGraphUsers
+        }
+        else 
+        {
+            $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
+        }
+
+        if ($userList.count -gt 0)
+        {
+            out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
+        }
+
+        $htmlValues['htmlGetMSGraphDomains']=Get-Date
+
+        if($bringYourOwnDomains.count -eq 0)
+        {
+            $domainsList = get-msGraphDomains
+        }
+        else 
+        {
+            $domainsList = get-msGraphDomains -bringYourOwnDomains $bringYourOwnDomains
+        }
+        
+        if ($domainsList.count -gt 0)
+        {
+            out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
+        }
+        
+        $htmlValues['htmlAddressesToTest']=Get-Date
+
+        $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
+
+        if ($addressesToTest.count -gt 0)
+        {
+            out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
+        }
+
+        $htmlValues['htmlChunkAccounts']=Get-Date
+
+        if ($addressesToTest.count -gt $chunkSize)
+        {
+            out-logfile -string "Number of addresses to test > chunk size -> chunk the addresses."
+
+            get-chunkList -userBatchSize $chunkSize -listToChunk $addressesToTest
+
+            start-sleep -s 900
+        }
+        else 
+        {
+            out-logfile -string "Number of addresses to test < chunk size -> proceed with standard testing."
+        }
+
+        $htmlValues['htmlConsumerAccountTest']=Get-Date
+
+        out-logfile -string "Addresses provided - proceed with consumer testing."
+
+        $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+
+        if ($consumerAccountList.count -gt 0)
+        {
+            out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+            out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+        }
+
+        $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
+        $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
+        $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]$consumerAccountList.Count
+        $telemetryValues['telemetryEndTime']=(Get-UniversalDateTime)
+        $telemetryValues['telemetryElapsedSeconds']=[double](Get-ElapsedTime -startTime $telemetryValues['telemetryStartTime'] -endTime  $telemetryValues['telemetryEndTime'])
+
+        $htmlValues['htmlEndTime']=Get-Date
+
+        generate-htmlFile -htmlTime $htmlValues -accounts $consumerAccountList
+
+        if ($allowTelemetryCollection -eq $TRUE)
+        {
+            $telemetryEventProperties = @{
+                AuditConsumerAccountsCommand = $telemetryValues.telemetryEventName
+                AuditConsumerAccountCommandVersion = $telemetryValues.telemetryAuditConsumerAccounts
+                MSGraphAuthentication = $telemetryValues.telemetryMSGraphAuthentication
+                MSGraphUsers = $telemetryValues.telemetryMSGraphUsers
+                MSGraphDirectory = $telemetryValues.telemetryMSGraptelemetryMSGraphDirectory
+                MSIdentityTools = $telemetryValues.telemetryMSIdentityTools
+                PSWriteHTML = $telemetryValues.telemetryHTML
+                TelemtryHelper = $telemetryValues.telemetryTelemetry
+                OSVersion = $telemetryValues.telemetryOSVersion
+                MigrationStartTimeUTC = $telemetryValues.telemetryStartTime
+                MigrationEndTimeUTC = $telemetryValues.telemetryEndTime
             }
-            else 
-            {
-                $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
+
+            $telemetryEventMetrics = @{
+                    MigrationElapsedSeconds = $telemetryValues.telemetryElapsedSeconds
+                    NumberOfUsers = $telemetryValues.telemetryNumberOfUsers
+                    NumberOfAddresses = $telemetryValues.telemetryNumberofAddresses
+                    NumberOfConsumerAccounts = $telemetryValues.telemetryNumberOfConsumerAccounts
             }
+        }
 
-            if ($userList.count -gt 0)
-            {
-                out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
-            }
-
-            $htmlValues['htmlGetMSGraphDomains']=Get-Date
-
-            if($bringYourOwnDomains.count -eq 0)
-            {
-                $domainsList = get-msGraphDomains
-            }
-            else 
-            {
-                $domainsList = get-msGraphDomains -bringYourOwnDomains $bringYourOwnDomains
-            }
-            
-            if ($domainsList.count -gt 0)
-            {
-                out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
-            }
-            
-            $htmlValues['htmlAddressesToTest']=Get-Date
-
-            $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
-
-            if ($addressesToTest.count -gt 0)
-            {
-                out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
-            }
-
-            $htmlValues['htmlConsumerAccountTest']=Get-Date
-
-            out-logfile -string "Addresses provided - proceed with consumer testing."
-
-            $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
-
-            if ($consumerAccountList.count -gt 0)
-            {
-                out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
-                out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
-            }
-
-            $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
-            $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
-            $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]$consumerAccountList.Count
-            $telemetryValues['telemetryEndTime']=(Get-UniversalDateTime)
-            $telemetryValues['telemetryElapsedSeconds']=[double](Get-ElapsedTime -startTime $telemetryValues['telemetryStartTime'] -endTime  $telemetryValues['telemetryEndTime'])
-
-            $htmlValues['htmlEndTime']=Get-Date
-
-            generate-htmlFile -htmlTime $htmlValues -accounts $consumerAccountList
-
-            if ($allowTelemetryCollection -eq $TRUE)
-            {
-                $telemetryEventProperties = @{
-                    AuditConsumerAccountsCommand = $telemetryValues.telemetryEventName
-                    AuditConsumerAccountCommandVersion = $telemetryValues.telemetryAuditConsumerAccounts
-                    MSGraphAuthentication = $telemetryValues.telemetryMSGraphAuthentication
-                    MSGraphUsers = $telemetryValues.telemetryMSGraphUsers
-                    MSGraphDirectory = $telemetryValues.telemetryMSGraptelemetryMSGraphDirectory
-                    MSIdentityTools = $telemetryValues.telemetryMSIdentityTools
-                    PSWriteHTML = $telemetryValues.telemetryHTML
-                    TelemtryHelper = $telemetryValues.telemetryTelemetry
-                    OSVersion = $telemetryValues.telemetryOSVersion
-                    MigrationStartTimeUTC = $telemetryValues.telemetryStartTime
-                    MigrationEndTimeUTC = $telemetryValues.telemetryEndTime
-                }
-
-                $telemetryEventMetrics = @{
-                        MigrationElapsedSeconds = $telemetryValues.telemetryElapsedSeconds
-                        NumberOfUsers = $telemetryValues.telemetryNumberOfUsers
-                        NumberOfAddresses = $telemetryValues.telemetryNumberofAddresses
-                        NumberOfConsumerAccounts = $telemetryValues.telemetryNumberOfConsumerAccounts
-                }
-            }
-
-            if ($allowTelemetryCollection -eq $TRUE)
-            {
-                out-logfile -string "Telemetry1"
-                out-logfile -string $traceModuleName
-                out-logfile -string "Telemetry2"
-                out-logfile -string $telemetryValues.telemetryEventName
-                out-logfile -string "Telemetry3"
-                out-logfile -string $telemetryEventMetrics
-                out-logfile -string "Telemetry4"
-                out-logfile -string $telemetryEventProperties
-                send-TelemetryEvent -traceModuleName $traceModuleName -eventName $telemetryValues.telemetryEventName -eventMetrics $telemetryEventMetrics -eventProperties $telemetryEventProperties
-            }
+        if ($allowTelemetryCollection -eq $TRUE)
+        {
+            out-logfile -string "Telemetry1"
+            out-logfile -string $traceModuleName
+            out-logfile -string "Telemetry2"
+            out-logfile -string $telemetryValues.telemetryEventName
+            out-logfile -string "Telemetry3"
+            out-logfile -string $telemetryEventMetrics
+            out-logfile -string "Telemetry4"
+            out-logfile -string $telemetryEventProperties
+            send-TelemetryEvent -traceModuleName $traceModuleName -eventName $telemetryValues.telemetryEventName -eventMetrics $telemetryEventMetrics -eventProperties $telemetryEventProperties
+        }
     }
     else 
     {

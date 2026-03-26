@@ -72,7 +72,7 @@ function Generate-HTMLFile
                     new-HTMLTimeLineItem -HeadingText "Start Get MSGraph Users" -Date $htmlTime.htmlGetMSGraphUsers
                     new-HTMLTimeLineItem -HeadingText "Start Get MSGraph Domains" -Date $htmlTime.htmlGetMSGraphDomains
                     new-HTMLTimeLineItem -HeadingText "Evaluate Addresses to Test" -Date $htmlTime.htmlAddressesToTest
-                    new-HTMLTimeLineItem -HeadingText "Chunk Addresses To Test" -Date $htmlTime.htmlAddressesToTest
+                    new-HTMLTimeLineItem -HeadingText "Chunk Addresses To Test" -Date $htmlTime.htmlChunkAccounts
                     new-HTMLTimeLineItem -HeadingText "Evaluate Consumer Accounts" -Date $htmlTime.htmlConsumerAccountTest
                     new-HTMLTimeLineItem -HeadingText "EndTime" -Date $htmlTime.htmlEndTime
                 }
