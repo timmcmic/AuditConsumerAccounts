@@ -12,6 +12,16 @@ function Get-MsIdReliableStatus {
 
     try {
         $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10 -errorAction STOP
+        $outputObject.requestID = $response.Headers["x-ms-request-id"]
+=
+        try {
+                $data = $response.Content | ConvertFrom-Json -ErrorAction Stop
+
+        }
+        catch {
+            out-logfile -string $_
+            out-logfile -string "Unable to convert the response to JSON - failure." -isError:$true
+        }
     }
     catch {
         out-logfile -string "Unable to test for presence of commercial account."
@@ -19,9 +29,8 @@ function Get-MsIdReliableStatus {
             
         $outputObject.AccountError = $true
         $outputObject.AccountErrorText = $_
+        $outputObject.requestID = "None"
     }
-
-    $data = $response.Content | ConvertFrom-Json
 
     $status = $false
 
@@ -44,7 +53,6 @@ function Get-MsIdReliableStatus {
     }
 
     $outputObject.accountPresent = $status
-    $outputObject.requestID = $response.Headers["x-ms-request-id"]
 
     out-logfile -string $outputObject.accountPresent
     out-logfile -string $outputObject.requestID
