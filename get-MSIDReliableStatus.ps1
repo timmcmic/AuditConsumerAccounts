@@ -31,6 +31,16 @@ function Get-MsIdReliableStatus {
         out-logfile -string $data.MicrosoftAccount
         if ($data.MicrosoftAccount -eq 0) { $status = $true }
         elseif ($data.MicrosoftAccount -eq 1) { $status = $false }
+        elseif ($data.MicrosoftAccount -eq 2) 
+        { 
+            $outputObject.AccountError = $true
+            $outputObject.AccountErrorText = "Validation request throttled by service." 
+        }
+        else 
+        {
+            $outputObject.AccountError = $true
+            $outputObject.AccountErrorText = "Unknown error - search logs for any clues." 
+        }
     }
 
     $outputObject.accountPresent = $status

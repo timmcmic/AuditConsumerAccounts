@@ -5,8 +5,7 @@ function get-ChunkList
         [Parameter(Mandatory = $true)]
         $listToChunk,
         [Parameter(Mandatory = $true)]
-        $userBatchSize,
-        [Parameter(Mandatory = $true)]
+        $userBatchSize
     )
 
     out-logfile -string "Start Get-ChunkList"
