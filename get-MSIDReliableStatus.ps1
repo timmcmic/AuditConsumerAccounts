@@ -13,9 +13,9 @@ function Get-MsIdReliableStatus {
     try {
         $response = Invoke-WebRequest -Uri $url -Method Get -UserAgent "Mozilla/5.0" -UseBasicParsing -TimeoutSec 10 -errorAction STOP
         $outputObject.requestID = $response.Headers["x-ms-request-id"]
-=
+
         try {
-                $data = $response.Content | ConvertFrom-Json -ErrorAction Stop
+            $data = $response.Content | ConvertFrom-Json -ErrorAction Stop
 
         }
         catch {

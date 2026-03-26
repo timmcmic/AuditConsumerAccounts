@@ -111,11 +111,13 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [boolean]$testPrimarySMTPOnly=$false,
         [Parameter(Mandatory = $false)]
-        $bringYourOwnDomains=$NULL,
+        $resursiveDomains=$NULL,
         [Parameter(Mandatory = $false)]
-        $bringYourOwnUsers=$NULL,
+        $recursiveAddresses=$NULL,
         [Parameter(Mandatory = $false)]
-        $bringYourOwnAddresses=$NULL
+        [array]$bringYourOwnAddresses=@(),
+        [Parameter(Mandatory = $false)]
+        [array]$bringYourOwnDomains=@()
     )
 
     #Initialize telemetry collection.
@@ -148,6 +150,8 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryMSGraphAuthentication']="None"
     $telemetryValues['telemetryMSGraphUsers']="None"
     $telemetryValues['telemetryMSGraphDirectory']="None"
+    $telemetryValues['telemetryHTML']="None"
+    $telemetryValues['telemetryTelemetry']="None"
     $telemetryValues['telemetryOSVersion']="None"
     $telemetryValues['telemetryStartTime']=(get-UniversalDateTime)
     $telemetryValues['telemetryEndTime']="None"
@@ -168,6 +172,9 @@ function Start-AuditConsumerAccounts
     $msGraphValues['msGraphDomainPermissions']=$msGraphDomainPermissions
     $msGraphValues['msGraphUserPermissions']=$msGraphUserPermissions
     $msGraphValues['msGraphAuthenticationType']=$PSCmdlet.ParameterSetName
+    $msGraphValues['msGraphCertificateAuth']="Certificate"
+    $msGraphValues['msGraphInteractiveAuth']="Interactive"
+    $msGraphValues['msGraphClientSecretAuth']="ClientSecret"
 
     #Create HTML Table
 
@@ -207,6 +214,19 @@ function Start-AuditConsumerAccounts
     out-logfile -string "BEGIN Start-AuditConsumerAccounts"
     out-logfile -string "==============================================================="
 
+    if ($bringYourOwnAddresses -ne [array])
+    {
+        $bringYourOwnAddresses = @($bringYourOwnAddresses)
+    }
+
+    if ($bringYourOwnDomains -ne [array])
+    {
+        $bringYourOwnDomains = @($bringYourOwnDomains)
+    }
+
+    out-logfile -string ("User supplied domains count: "+$bringYourOwnDomains.count)
+    out-logfile -string ("User supplied addresses count: "+$bringYourOwnAddresses.Count)
+
     $htmlValues['htmlStartPowershellValidation']=Get-Date
     
     $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
@@ -214,35 +234,8 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
     $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
     $telemetryValues['telemetryAuditConsumerAccounts']=Test-PowerShellModule -powershellModuleName $powershellModules.AuditConsumerAccounts -powershellVersionTest:$TRUE
-    $null=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
-    $null=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
-
-    if ($bringYourOwnDomains -ne $NULL)
-    {
-        out-logfile -string ("Count of domains provided: "+$bringYourOwnDomains.count)
-    }
-    else 
-    {
-        Out-logfile -string "Domains not provided."
-    }
-
-    if ($bringYourOwnUsers -ne $NULL)
-    {
-        out-logfile -string ("Count of users provided: "+$bringYourOwnUsers.count)
-    }
-    else 
-    {
-        Out-logfile -string "Users not provided."
-    }
-
-    if ($bringYourOwnAddresses -ne $NULL)
-    {
-        out-logfile -string ("Count of addresses provided: "+$bringYourOwnAddresses.count)
-    }
-    else 
-    {
-        Out-logfile -string "Addresses not provided."
-    }
+    $telemetryValues['telemetryTelemetry']=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryHTML']=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
     $htmlValues['htmlStartMSGraph']=Get-Date
 
@@ -256,8 +249,15 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
-    $userList = get-MSGraphUsers
-    
+    if ($bringYourOwnAddresses.count -eq 0)
+    {
+        $userList = get-MSGraphUsers
+    }
+    else 
+    {
+        $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
+    }
+
     if ($userList.count -gt 0)
     {
         out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
@@ -265,8 +265,15 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlGetMSGraphDomains']=Get-Date
 
-    $domainsList = get-msGraphDomains
-
+    if($bringYourOwnDomains.count -eq 0)
+    {
+        $domainsList = get-msGraphDomains
+    }
+    else 
+    {
+        $domainsList = get-msGraphDomains -bringYourOwnDomains $bringYourOwnDomains
+    }
+    
     if ($domainsList.count -gt 0)
     {
         out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
@@ -312,6 +319,8 @@ function Start-AuditConsumerAccounts
             MSGraphUsers = $telemetryValues.telemetryMSGraphUsers
             MSGraphDirectory = $telemetryValues.telemetryMSGraptelemetryMSGraphDirectory
             MSIdentityTools = $telemetryValues.telemetryMSIdentityTools
+            PSWriteHTML = $telemetryValues.telemetryHTML
+            TelemtryHelper = $telemetryValues.telemetryTelemetry
             OSVersion = $telemetryValues.telemetryOSVersion
             MigrationStartTimeUTC = $telemetryValues.telemetryStartTime
             MigrationEndTimeUTC = $telemetryValues.telemetryEndTime
