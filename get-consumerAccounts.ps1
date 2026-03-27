@@ -33,7 +33,7 @@ function get-ConsumerAccounts
 
         $returnList.add($account)
 
-        Start-Sleep -m 200
+        Start-Sleep -s 1
     }
 
     write-progress -activity "Processing Recipient" -completed

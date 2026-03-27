@@ -326,7 +326,7 @@ function Start-AuditConsumerAccounts
 
         $htmlValues['htmlConsumerAccountTest']=Get-Date
 
-        if ($chunkList.count -gt 0)
+        if (($chunkList.count -gt 0) -and (($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphCertificateAuth ) -or ($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphClientSecretAuth)))
         {
             out-logfile -string "The number of users required chunking - start thread jobs to process groups of users."
 
@@ -340,7 +340,7 @@ function Start-AuditConsumerAccounts
                 {  
                     out-logfile -string "Graph Certificate Jobs"
                 }
-                $msGraphValues.msGraphAuthenticationType 
+                $msGraphValues.msGraphClientSecretAuth 
                 {  
                     out-logfile -string "Graph Client Secret Auth"
 
@@ -478,6 +478,6 @@ function Start-AuditConsumerAccounts
 
         out-logfile -string 'Executing random throttling value between 5 and 10 minutes.'
 
-        #start-sleep -seconds ((Get-Random -Minimum 5 -Maximum 10)*60)
+        start-sleep -seconds ((Get-Random -Minimum 5 -Maximum 10)*60)
     }
 }
