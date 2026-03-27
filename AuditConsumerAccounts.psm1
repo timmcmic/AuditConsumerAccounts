@@ -111,8 +111,6 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [boolean]$testPrimarySMTPOnly=$false,
         [Parameter(Mandatory = $false)]
-        $resursiveDomains=$NULL,
-        [Parameter(Mandatory = $false)]
         $recursiveAddresses=$NULL,
         [Parameter(Mandatory = $false)]
         $recursiveDomains=$NULL,
@@ -121,7 +119,7 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [array]$bringYourOwnDomains=@(),
         [Parameter(Mandatory = $false)]
-        $jobNumber = $null
+        $jobNumber = -1
     )
 
     #Initialize telemetry collection.
@@ -164,6 +162,8 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryNumberOfUsers']=[double]0
     $telemetryValues['telemetryNumberofAddresses']=[double]0
     $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]0
+    $telemetryValues['telemetryNumberOfConsumerAccountsErrors']=[double]0
+
 
     #Create MSGraphHashTable
 
@@ -192,15 +192,27 @@ function Start-AuditConsumerAccounts
     $exportNames['domainsCSV']="-DomainsCSV"
     $exportNames['addressesToTextXML']="-AddressToTestXML"
     $exportNames['consumerAccountsXML']="-ConsumerAccounts"
+    $exportNames['consumerAccountsErrorsXML']="-ConsumerAccountsErrors"
 
     #Set the execution windows name.
 
-    $windowTitle = "Start-AuditConsumerAccounts"
-    $host.ui.RawUI.WindowTitle = $windowTitle
+    if ($jobNumber -eq -1)
+    {
+        $windowTitle = "Start-AuditConsumerAccounts"
+        $host.ui.RawUI.WindowTitle = $windowTitle
+    }
 
     #Define global variables.
 
-    [string]$global:staticFolderName="\AuditConsumerAccounts\"
+    if ($jobNumber -eq -1)
+    {
+         [string]$global:staticFolderName="\AuditConsumerAccounts\"
+    }
+    else 
+    {
+         [string]$global:staticFolderName="\AuditConsumerAccounts\"+$jobNumber.toString()+"\"
+    }
+   
 
     #Define local variables.
 
@@ -210,7 +222,7 @@ function Start-AuditConsumerAccounts
     $addressesToTest
     $consumerAccountList
 
-    $chunkList = $null
+    $chunkList = @()
     $chunkSize = 50
 
     #Start the log file.
@@ -244,7 +256,7 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryTelemetry']=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
     $telemetryValues['telemetryHTML']=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
-    if (($recursiveAddresses -eq $NULL) -and ($recursiveDomains -eq $null))
+    if ($recursiveAddresses -eq $NULL)
     {
         $htmlValues['htmlStartMSGraph']=Get-Date
 
@@ -303,9 +315,9 @@ function Start-AuditConsumerAccounts
         {
             out-logfile -string "Number of addresses to test > chunk size -> chunk the addresses."
 
-            get-chunkList -userBatchSize $chunkSize -listToChunk $addressesToTest
+            $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $addressesToTest
 
-            start-sleep -s 900
+            out-logfile -string "Completed chunking list."
         }
         else 
         {
@@ -314,9 +326,81 @@ function Start-AuditConsumerAccounts
 
         $htmlValues['htmlConsumerAccountTest']=Get-Date
 
-        out-logfile -string "Addresses provided - proceed with consumer testing."
+        if ($chunkList.count -gt 0)
+        {
+            out-logfile -string "The number of users required chunking - start thread jobs to process groups of users."
 
-        $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+            switch ($msGraphValues.msGraphAuthenticationType) 
+            {
+                $msGraphValues.msGraphInteractiveAuth 
+                {  
+                    out-logfile -string "Graph Interactive Jobs"
+                }
+                $msGraphValues.msGraphCertificateAuth 
+                {  
+                    out-logfile -string "Graph Certificate Jobs"
+                }
+                $msGraphValues.msGraphAuthenticationType 
+                {  
+                    out-logfile -string "Graph Client Secret Auth"
+
+                    for ($i = 0 ; $i -lt $chunkList.count ; $i++)
+                    {
+                        if ($i -eq 0)
+                        {
+                            Start-ThreadJob -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ThrottleLimit 5
+                        }
+                        else 
+                        {
+                            Start-ThreadJob -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i]
+                        }
+                    }
+
+                    out-logfile -string "Looping until all jobs have completed successfully."
+
+                    do {
+                        $jobStatus = @(Get-Job -State "Running")+@(get-Job -state "NotStarted")
+                        $jobStatus 
+                        out-logfile -string ("Pending Job Count: "+$jobStatus.Count)
+
+                        if ($jobStatus.count -gt 0)
+                        {
+                            start-sleepProgress -sleepSeconds 5 -sleepString "Sleeping until all jobs completed..."
+                        }
+                    } until (
+                        $jobStatus.count -eq 0
+                    )
+                }
+            }
+
+            out-logfile -string "Collect all log files from the associated jobs."
+
+            get-multipleLogFiles -logFolderPath $logFolderPath -baseName $logFileName -fileName $logFileName
+
+            out-logfile -string "All log files successfully appeded to current log."
+
+            out-logfile -string "Gather all XML files for consumer accounts."
+
+            $consumerAccountList = get-MultipleXMLFiles -fileName $exportNames.consumerAccountsXML -baseName $logFileName -logFolderPath $logFolderPath
+
+            if ($consumerAccountList.count -gt 0)
+            {
+                out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+                out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+            }
+
+            remove-jobFiles -logFolderPath $logFolderPath -baseName $logFileName
+
+            remove-jobDirectories -logFolderPath $logFolderPath -baseName $logFileName
+
+            remove-completedJobs
+        }
+        else 
+        {
+            out-logfile -string "Addresses provided - proceed with consumer testing."
+
+            $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+        }
 
         if ($consumerAccountList.count -gt 0)
         {
@@ -324,11 +408,17 @@ function Start-AuditConsumerAccounts
             out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
         }
 
-        $telemetryValues['telemetryNumberOfUsers']=[double]$userList.count
-        $telemetryValues['telemetryNumberofAddresses']=[double]$addressesToTest.count
-        $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]$consumerAccountList.Count
-        $telemetryValues['telemetryEndTime']=(Get-UniversalDateTime)
-        $telemetryValues['telemetryElapsedSeconds']=[double](Get-ElapsedTime -startTime $telemetryValues['telemetryStartTime'] -endTime  $telemetryValues['telemetryEndTime'])
+        if (($consumerAccountList | where {$_.accountError -eq $TRUE}).count -gt 0)
+        {
+            out-xmlFile -itemToExport ($consumerAccountList | where {$_.accountError -eq $TRUE}) -itemNameToExport $exportNames.consumerAccountsErrorsXML
+        }
+
+        $telemetryValues.telemetryNumberOfUsers=[double]$userList.count
+        $telemetryValues.telemetryNumberofAddresses=[double]$addressesToTest.count
+        $telemetryValues.telemetryNumberOfConsumerAccounts=[double](@($consumerAccountList | where {$_.accountError -eq $false}).count)
+        $telemetryValues.telemetryNumberOfConsumerAccountsErrors=[double](@($consumerAccountList | where {$_.accountError -eq $true}).count)
+        $telemetryValues.telemetryEndTime=(Get-UniversalDateTime)
+        $telemetryValues.telemetryElapsedSeconds=[double](Get-ElapsedTime -startTime $telemetryValues.telemetryStartTime -endTime  $telemetryValues.telemetryEndTime)
 
         $htmlValues['htmlEndTime']=Get-Date
 
@@ -355,6 +445,7 @@ function Start-AuditConsumerAccounts
                     NumberOfUsers = $telemetryValues.telemetryNumberOfUsers
                     NumberOfAddresses = $telemetryValues.telemetryNumberofAddresses
                     NumberOfConsumerAccounts = $telemetryValues.telemetryNumberOfConsumerAccounts
+                    NumberOfConsumerAccountErrors = $telemetryValues.telemetryNumberOfConsumerAccountsErrors
             }
         }
 
@@ -370,9 +461,23 @@ function Start-AuditConsumerAccounts
             out-logfile -string $telemetryEventProperties
             send-TelemetryEvent -traceModuleName $traceModuleName -eventName $telemetryValues.telemetryEventName -eventMetrics $telemetryEventMetrics -eventProperties $telemetryEventProperties
         }
+
+        disable-allPowerShellSessions
     }
     else 
-    {
-        <# Action when all if and elseif conditions are false #>
+    {   
+        out-logfile -string "Starting account testing based off provided domains and data."
+
+        $consumerAccountList = get-ConsumerAccounts -accountList $recursiveAddresses
+
+        if ($consumerAccountList.count -gt 0)
+        {
+            out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+            out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+        }
+
+        out-logfile -string 'Executing random throttling value between 5 and 10 minutes.'
+
+        #start-sleep -seconds ((Get-Random -Minimum 5 -Maximum 10)*60)
     }
 }

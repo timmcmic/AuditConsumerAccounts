@@ -31,5 +31,5 @@ function remove-JobDirectories
         }
     }
         
-    out-logfile -string "End Get-MultipleLogFiles"
+    out-logfile -string "End Remove-JobDirectories"
 }

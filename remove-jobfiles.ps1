@@ -14,21 +14,28 @@ function remove-JobFiles
 
     write-host $rootPath
 
-    $files = @(Get-ChildItem -path $rootPath -File)
+    $directories = @(Get-ChildItem -path $rootPath -Directory)
 
-    Write-Host $files.Count.tostring()
-
-    foreach ($file in $files)
+    foreach ($directory in $directories)
     {
-        out-logfile -string $file
+        out-logfile -string ("Processing directory: "+$directory.fullName)
 
-        try {
-            remove-Item -path $file -Force -ErrorAction STOP
-        }
-        catch {
-            write-error $_
+        $files = @(Get-ChildItem -path $directory.fullName -File)
+
+         Write-Host $files.Count.tostring()
+
+        foreach ($file in $files)
+        {
+            out-logfile -string $file
+
+            try {
+                remove-Item -path $file -Force -ErrorAction STOP
+            }
+            catch {
+                write-error $_
+            }
         }
     }
-        
-    write-host "End Get-MultipleLogFiles"
+  
+    write-host "End Get-Remove-JobFiles"
 }
