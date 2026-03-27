@@ -365,7 +365,7 @@ function Start-AuditConsumerAccounts
 
                         if ($jobStatus.count -gt 0)
                         {
-                            start-sleepProgress -sleepSeconds 5 -sleepString "Sleeping until all jobs completed..."
+                            start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
                         }
                     } until (
                         $jobStatus.count -eq 0
