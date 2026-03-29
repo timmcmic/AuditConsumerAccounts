@@ -33,33 +33,47 @@ function Generate-HTMLFile
 
             out-logfile -string "Generate consumer account table."
 
-            $test = $accounts | where {$_.AccountPresent -eq $true}
-
-            if ($test.count -gt 0)
+            if ($accounts.count -gt 0)
             {
-                out-logfile -string "Consumer accounts were present - generate table."
+                $test = $accounts | where {$_.AccountPresent -eq $true}
 
-                new-htmlSection -HeaderText ("Consumer Account Summary Report") {
-                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN,RequestID) -Filtering -AlphabetSearch{
-                    } 
-                }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Blue"  -CanCollapse -BorderRadius 10px -collapsed
+                if ($test.count -gt 0)
+                {
+                    out-logfile -string "Consumer accounts were present - generate table."
+
+                    new-htmlSection -HeaderText ("Consumer Account Summary Report") {
+                        new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN,RequestID) -Filtering -AlphabetSearch{
+                        } 
+                    }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Blue"  -CanCollapse -BorderRadius 10px -collapsed
+                }
+                else 
+                {
+                    new-HTMLText -Text "No Consumer Accounts Found" -FontSize 24 -Color White -BackGroundColor Red -Alignment center
+                }
+
+                $test = $accounts | where {$_.accountError -eq $TRUE}
+
+                if ($test.count -gt 0)
+                {
+                    out-logfile -string "Account testing failed - list errors.."
+
+                    new-htmlSection -HeaderText ("Consumer Account Failed Queries") {
+                        new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN,AccountErrorText) -Filtering -AlphabetSearch{
+                        } 
+                    }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Red"  -CanCollapse -BorderRadius 10px -collapsed
+                }
+                else 
+                {
+                    new-HTMLText -Text "No Consumer Accounts Test Errors Found" -FontSize 24 -Color White -BackGroundColor Red -Alignment center
+                }
             }
             else 
             {
                 new-HTMLText -Text "No Consumer Accounts Found" -FontSize 24 -Color White -BackGroundColor Red -Alignment center
+                new-HTMLText -Text "No Consumer Accounts Test Errors Found" -FontSize 24 -Color White -BackGroundColor Red -Alignment center
             }
 
-            $test = $accounts | where {$_.accountError -eq $TRUE}
-
-            if ($test.count -gt 0)
-            {
-                out-logfile -string "Account testing failed - list errors.."
-
-                new-htmlSection -HeaderText ("Consumer Account Failed Queries") {
-                    new-htmlTable -DataTable ($test | Select-Object Address,ID,UPN,AccountErrorText) -Filtering -AlphabetSearch{
-                    } 
-                }-HeaderTextAlignment "Left" -HeaderTextSize "16" -HeaderTextColor "White" -HeaderBackGroundColor "Red"  -CanCollapse -BorderRadius 10px -collapsed
-            }
+            
         
             out-logfile -string "Generate timeline."
 

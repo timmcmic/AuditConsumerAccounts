@@ -272,7 +272,7 @@ function Start-AuditConsumerAccounts
 
         $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
 
-        start-sleep -s 500
+        #start-sleep -s 500
 
         $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
@@ -285,7 +285,7 @@ function Start-AuditConsumerAccounts
             if ($bringYourOwnAddresses[0] -is [psCustomObject])
             {
                 out-logfile -string "Administrator has provided specific objects to test"
-                $userList = $bringYourOwnAddresses
+                $userList = @()
             }
             else 
             {
@@ -316,37 +316,45 @@ function Start-AuditConsumerAccounts
 
         $htmlValues['htmlChunkUsers']=Get-Date
 
-        if ($userList.count -gt $chunkSize)
+        if (($userList.count -gt $chunkSize) -or ($bringYourOwnAddresses.count -gt $chunkSize))
         {
-            $function = get-command get-AddressesToTest
+            if ($bringYourOwnAddresses[0] -is [PSCustomObject])
+            {
+                $htmlValues['htmlAddressesToTest']=Get-Date
+                $addressesToTest = $bringYourOwnAddresses
+            }
+            else 
+            {
+                $function = get-command get-AddressesToTest
 
-            $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
+                $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
 
-            $htmlValues['htmlAddressesToTest']=Get-Date
+                $htmlValues['htmlAddressesToTest']=Get-Date
 
-            $addressesToTest = $chunklist | ForEach-Object -Parallel {
-                $refObj = $using:function
-                [System.Threading.Monitor]::Enter($refObj)
-                ${function:Get-AddressesToTest} = $using:Function
+                $addressesToTest = $chunklist | ForEach-Object -Parallel {
+                    $refObj = $using:function
+                    [System.Threading.Monitor]::Enter($refObj)
+                    ${function:Get-AddressesToTest} = $using:Function
 
-                get-AddressesToTest -userList $_ -domainsList $using:domainsList -testPrimarySMTPOnly $using:testPrimarySMTPOnly -isBulk:$true
+                    get-AddressesToTest -userList $_ -domainsList $using:domainsList -testPrimarySMTPOnly $using:testPrimarySMTPOnly -isBulk:$true
 
-                [System.Threading.Monitor]::Exit($refObj)
-            } -ThrottleLimit 10
+                    [System.Threading.Monitor]::Exit($refObj)
+                } -ThrottleLimit 10
 
-            $chunkList = @()
+                $chunkList = @()
 
-            $returnListCount = $addressesToTest.Count
+                $returnListCount = $addressesToTest.Count
 
-            out-logfile -string "Sort and unique the return list."
+                out-logfile -string "Sort and unique the return list."
 
-            $addressesToTest = $addressesToTest | Sort-Object -Property ID,Address -Unique
+                $addressesToTest = $addressesToTest | Sort-Object -Property ID,Address -Unique
 
-            $returnListCountSorted = $addressesToTest.count
+                $returnListCountSorted = $addressesToTest.count
 
-            out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
-            out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
-            out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
+                out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
+                out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
+                out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
+            }
         }
         else 
         {
@@ -481,6 +489,11 @@ function Start-AuditConsumerAccounts
         $telemetryValues.telemetryElapsedSeconds=[double](Get-ElapsedTime -startTime $telemetryValues.telemetryStartTime -endTime  $telemetryValues.telemetryEndTime)
 
         $htmlValues['htmlEndTime']=Get-Date
+
+        if ($consumerAccountList -eq $NULL)
+        {
+            $consumerAccountList = @()
+        }
 
         generate-htmlFile -htmlTime $htmlValues -accounts $consumerAccountList
 

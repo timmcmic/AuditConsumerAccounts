@@ -74,11 +74,14 @@ function verify-addressesProvided
                 out-logfile -string "Object missing address property, when using custom objects each must have an address property."
             }
 
-            $returnArray+=$address.address
-
             if (($address.PSObject.Properties['UPN']) -and ($address.PSObject.Properties['AccountPresent']) -and ($address.PSObject.Properties['AccountError']) -and ($address.PSObject.Properties['AccountErrorText']) -and ($address.PSObject.Properties['RequestID']) -and ($address.PSObject.Properties['TimeStamp']))
             {
                 out-logfile -string "Customer object provided has all the necessary properties"
+                $address.AccountPresent = $false
+                $address.AccountError=$false
+                $address.AccountErrorText=""
+                $address.requestID=""
+                $address.timeStamp=""
             }
             else
             {
@@ -90,7 +93,9 @@ function verify-addressesProvided
                 out-logfile -string "Each object must have an RequestID property set to NULL"
                 out-logfile -string "Each object must have an TimeStamp property set to NULL"
                 out-logfile -string "EXCEPTION:  User provided object not in correct format..." -isError:$true
-            }   
+            }
+            
+            $returnArray+=$address
         }
     }
 
