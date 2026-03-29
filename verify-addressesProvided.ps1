@@ -36,10 +36,15 @@ function verify-addressesProvided
     if ($addressList[1] -is [PSCustomObject])
     {
         out-logfile -string "Array of PSCustomObjects provided."
+        out-logfile -string $addressList.count
     }
     elseif ($addressList[1] -is [string])
     {
         out-logfile -string "Array of strings provided."
+        out-logfile -string "Remove all references to null and empty strings from the array."
+        out-logfile -string $addressList.count
+        $addressList = $addressList | where-object { $_ }
+        out-logfile -string $addressList.count
         $isString = $true
     }
 
@@ -53,7 +58,7 @@ function verify-addressesProvided
 
             regExTestEmail -addressToTest $address
 
-            $returnArray+=$address
+            $returnArray+=[string]$address
         }
     }
     else 

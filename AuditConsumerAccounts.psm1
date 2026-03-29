@@ -272,8 +272,6 @@ function Start-AuditConsumerAccounts
 
         $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
 
-        #start-sleep -s 500
-
         $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
         if ($bringYourOwnAddresses.count -eq 0)
@@ -316,7 +314,7 @@ function Start-AuditConsumerAccounts
 
         $htmlValues['htmlChunkUsers']=Get-Date
 
-        if (($userList.count -gt $chunkSize) -or ($bringYourOwnAddresses.count -gt $chunkSize))
+        if (($userList.count -ge $chunkSize) -or ($bringYourOwnAddresses.count -ge $chunkSize))
         {
             if ($bringYourOwnAddresses[0] -is [PSCustomObject])
             {
@@ -356,12 +354,20 @@ function Start-AuditConsumerAccounts
                 out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
             }
         }
-        else 
+        elseif (($userList.count -lt $chunkSize) -or ($bringYourOwnAddresses.count -lt $chunkSize)) 
         {
-            $htmlValues['htmlChunkUsers']=Get-Date
-            $htmlValues['htmlAddressesToTest']=Get-Date
-
-            $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
+            if ($bringYourOwnAddresses[0] -is [PSCustomObject])
+            {
+                $htmlValues['htmlChunkUsers']=Get-Date
+                $htmlValues['htmlAddressesToTest']=Get-Date
+                $addressesToTest = $bringYourOwnAddresses
+            }
+            else 
+            {
+                $htmlValues['htmlAddressesToTest']=Get-Date
+                $htmlValues['htmlChunkUsers']=Get-Date
+                $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
+            }
         }
         
         if ($addressesToTest.count -gt 0)
