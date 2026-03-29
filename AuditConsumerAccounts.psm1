@@ -272,6 +272,8 @@ function Start-AuditConsumerAccounts
 
         $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
 
+        start-sleep -s 500
+
         $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
         if ($bringYourOwnAddresses.count -eq 0)
@@ -280,7 +282,15 @@ function Start-AuditConsumerAccounts
         }
         else 
         {
-            $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
+            if ($bringYourOwnAddresses[0] -is [psCustomObject])
+            {
+                out-logfile -string "Administrator has provided specific objects to test"
+                $userList = $bringYourOwnAddresses
+            }
+            else 
+            {
+                $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
+            }
         }
 
         if ($userList.count -gt 0)

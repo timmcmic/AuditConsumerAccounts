@@ -73,6 +73,22 @@ function verify-addressesProvided
             }
 
             $returnArray+=$address.address
+
+            if (($address.PSObject.Properties['UPN']) -and ($address.PSObject.Properties['AccountPresent']) -and ($address.PSObject.Properties['AccountError']) -and ($address.PSObject.Properties['AccountErrorTest']) -and ($address.PSObject.Properties['RequestID']) -and ($address.PSObject.Properties['TimeStamp']))
+            {
+                out-logfile -string "Customer object provided has all the necessary properties"
+            }
+            else
+            {
+                out-logfile -string "When provied custom objects for bringYourOwnAddresses..."
+                out-logfile -string "Each object must have an ID propertie with the Entra objectID"
+                out-logfile -string "Each object must have an UPN propertie with the Entra UPN"
+                out-logfile -string "Each object must have an AccountPresent property set to NULL"
+                out-logfile -string "Each object must have an AccountErrorText property set to NULL"
+                out-logfile -string "Each object must have an RequestID property set to NULL"
+                out-logfile -string "Each object must have an TimeStamp property set to NULL"
+                out-logfile -string "EXCEPTION:  User provided object not in correct format..." -isError:$true
+            }   
         }
     }
 
