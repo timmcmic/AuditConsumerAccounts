@@ -45,6 +45,11 @@ function Get-MsIdReliableStatus {
             $outputObject.AccountError = $true
             $outputObject.AccountErrorText = "Validation request throttled by service." 
         }
+        elseif ($data.MicrosoftAccount -eq 4) 
+        { 
+            $outputObject.AccountError = $true
+            $outputObject.AccountErrorText = "ESTS unknown service failure." 
+        }
         else 
         {
             $outputObject.AccountError = $true

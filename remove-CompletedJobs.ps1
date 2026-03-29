@@ -1,6 +1,5 @@
 function remove-CompletedJobs
 {
-
     out-logfile -string "Remove-CompletedJobs"
 
     $jobCount = Get-Job

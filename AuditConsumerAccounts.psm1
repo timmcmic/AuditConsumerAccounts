@@ -268,6 +268,10 @@ function Start-AuditConsumerAccounts
 
         verify-graphConnection -graphHashTable $msGraphValues
 
+        $htmlValues['ValidateAddressesProvided']=Get-Date
+
+        $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
+
         $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
         if ($bringYourOwnAddresses.count -eq 0)

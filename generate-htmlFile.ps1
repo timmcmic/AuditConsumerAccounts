@@ -69,6 +69,7 @@ function Generate-HTMLFile
                     new-HTMLTimeLineItem -HeadingText "Start Powershell Validation" -Date $htmlTime.htmlStartPowershellValidation
                     new-HTMLTimeLineItem -HeadingText "Start MSGraph Connection" -Date $htmlTime.htmlStartMSGraph
                     new-HTMLTimeLineItem -HeadingText "Start Verify MSGraph" -Date $htmlTime.htmlVerifyMSGraph
+                    new-HTMLTimeLineItem -HeadingText "Validate Email Addresses" -Date $htmlTime.ValidateAddressesProvided
                     new-HTMLTimeLineItem -HeadingText "Start Get MSGraph Users" -Date $htmlTime.htmlGetMSGraphUsers
                     new-HTMLTimeLineItem -HeadingText "Start Get MSGraph Domains" -Date $htmlTime.htmlGetMSGraphDomains
                     new-HTMLTimeLineItem -HeadingText "Chunk Users to Test" -Date $htmlTime.htmlChunkUsers
