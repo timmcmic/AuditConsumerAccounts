@@ -33,7 +33,7 @@ Copyright = '(c) 2021 CSS Support. All rights reserved.'
 Description = 'This module audits registered domains and addresses from EntraID for Microsoft Consumer Accounts.'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '7.5'
+PowerShellVersion = '7.6'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
