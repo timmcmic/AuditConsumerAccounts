@@ -51,7 +51,7 @@ function verify-addressesProvided
         {
             out-logfile -string ("Testing address:"+$address)
 
-            regExAddressToTest -addressToTest $address
+            regExTestEmail -addressToTest $address
 
             $returnArray+=$address
         }
@@ -62,10 +62,12 @@ function verify-addressesProvided
 
         foreach ($address in $addressList)
         {
+            out-logfile -string ("Testing Address: "+$address.address)
+
             if ($address.PSObject.Properties['Address'])
             {
                 out-logfile -string "Address property found..."
-                regExAddressToTest -addressToTest $address
+                regExTestEmail -addressToTest $address.address
             }
             else 
             {
@@ -74,7 +76,7 @@ function verify-addressesProvided
 
             $returnArray+=$address.address
 
-            if (($address.PSObject.Properties['UPN']) -and ($address.PSObject.Properties['AccountPresent']) -and ($address.PSObject.Properties['AccountError']) -and ($address.PSObject.Properties['AccountErrorTest']) -and ($address.PSObject.Properties['RequestID']) -and ($address.PSObject.Properties['TimeStamp']))
+            if (($address.PSObject.Properties['UPN']) -and ($address.PSObject.Properties['AccountPresent']) -and ($address.PSObject.Properties['AccountError']) -and ($address.PSObject.Properties['AccountErrorText']) -and ($address.PSObject.Properties['RequestID']) -and ($address.PSObject.Properties['TimeStamp']))
             {
                 out-logfile -string "Customer object provided has all the necessary properties"
             }
