@@ -7,7 +7,9 @@ function get-AddressesToTest
         [Parameter(Mandatory = $true)]
         $domainsList,
         [Parameter(Mandatory = $TRUE)]
-        $testPrimarySMTPOnly
+        $testPrimarySMTPOnly,
+        [Parameter(Mandatory = $false)]
+        $isBulk=$FALSE
     )
 
     out-logfile -string "Begin Get-AddressesToTest"
@@ -143,18 +145,21 @@ function get-AddressesToTest
 
     write-progress -activity "Processing Recipient" -completed -Id 1
 
-    $returnListCount = $returnList.Count
+    if ($isBulk -eq $false)
+    {
+        $returnListCount = $returnList.Count
 
-    out-logfile -string "Sort and unique the return list."
+        out-logfile -string "Sort and unique the return list."
 
-    $returnList = $returnList | Sort-Object -Property ID,Address -Unique
+        $returnList = $returnList | Sort-Object -Property ID,Address -Unique
 
-    $returnListCountSorted = $returnList.count
+        $returnListCountSorted = $returnList.count
 
-    out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
-    out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
-    out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
-
+        out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
+        out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
+        out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
+    }
+    
     out-logfile -string "End Get-AddressToTest"
 
     return $returnList

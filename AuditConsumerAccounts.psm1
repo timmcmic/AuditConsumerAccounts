@@ -299,11 +299,49 @@ function Start-AuditConsumerAccounts
         {
             out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
         }
+
+        $htmlValues['htmlChunkUsers']=Get-Date
+
+        if ($userList.count -gt $chunkSize)
+        {
+            $function = get-command get-AddressesToTest
+
+            $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
+
+            $htmlValues['htmlAddressesToTest']=Get-Date
+
+            $addressesToTest = $chunklist | ForEach-Object -Parallel {
+                $refObj = $using:function
+                [System.Threading.Monitor]::Enter($refObj)
+                ${function:Get-AddressesToTest} = $using:Function
+
+                get-AddressesToTest -userList $_ -domainsList $using:domainsList -testPrimarySMTPOnly $using:testPrimarySMTPOnly -isBulk:$true
+
+                [System.Threading.Monitor]::Exit($refObj)
+            } -ThrottleLimit 10
+
+            $chunkList = @()
+
+            $returnListCount = $addressesToTest.Count
+
+            out-logfile -string "Sort and unique the return list."
+
+            $addressesToTest = $addressesToTest | Sort-Object -Property ID,Address -Unique
+
+            $returnListCountSorted = $addressesToTest.count
+
+            out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
+            out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
+            out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
+        }
+        else 
+        {
+            $htmlValues['htmlChunkUsers']=Get-Date
+            $htmlValues['htmlAddressesToTest']=Get-Date
+
+            $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
+        }
         
-        $htmlValues['htmlAddressesToTest']=Get-Date
-
-        $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
-
         if ($addressesToTest.count -gt 0)
         {
             out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
@@ -332,13 +370,21 @@ function Start-AuditConsumerAccounts
 
             switch ($msGraphValues.msGraphAuthenticationType) 
             {
-                $msGraphValues.msGraphInteractiveAuth 
-                {  
-                    out-logfile -string "Graph Interactive Jobs"
-                }
                 $msGraphValues.msGraphCertificateAuth 
                 {  
                     out-logfile -string "Graph Certificate Jobs"
+
+                    for ($i = 0 ; $i -lt $chunkList.count ; $i++)
+                    {
+                        if ($i -eq 0)
+                        {
+                            Start-ThreadJob -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ThrottleLimit 5
+                        }
+                        else 
+                        {
+                            Start-ThreadJob -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i]
+                        }
+                    }
                 }
                 $msGraphValues.msGraphClientSecretAuth 
                 {  
@@ -355,23 +401,23 @@ function Start-AuditConsumerAccounts
                             Start-ThreadJob -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i]
                         }
                     }
-
-                    out-logfile -string "Looping until all jobs have completed successfully."
-
-                    do {
-                        $jobStatus = @(Get-Job -State "Running")+@(get-Job -state "NotStarted")
-                        $jobStatus 
-                        out-logfile -string ("Pending Job Count: "+$jobStatus.Count)
-
-                        if ($jobStatus.count -gt 0)
-                        {
-                            start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
-                        }
-                    } until (
-                        $jobStatus.count -eq 0
-                    )
                 }
             }
+
+            out-logfile -string "Looping until all jobs have completed successfully."
+
+            do {
+                $jobStatus = @(Get-Job -State "Running")+@(get-Job -state "NotStarted")
+                $jobStatus 
+                out-logfile -string ("Pending Job Count: "+$jobStatus.Count)
+
+                if ($jobStatus.count -gt 0)
+                {
+                    start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
+                }
+            } until (
+                $jobStatus.count -eq 0
+            )
 
             out-logfile -string "Collect all log files from the associated jobs."
 

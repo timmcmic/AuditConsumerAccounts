@@ -6,6 +6,8 @@ function Get-MSGraphDomains
         [array]$bringYourOwnDomains=@()
     )
 
+    $onMicrosoft = "onmicrosoft.com"
+
     out-logfile -string "Begin Get-MSGraphDomains"
 
     if ($bringYourOwnDomains.count -eq 0)
@@ -13,7 +15,7 @@ function Get-MSGraphDomains
         try {
             out-logfile -string "Using graph call to obtain verified domains."
 
-            $domainList = get-MGDomain -All | where {$_.isVerified -eq $TRUE} | Select-Object Id
+            $domainList = get-MGDomain -All | where {($_.isVerified -eq $TRUE) -and ($_.ID -notMatch $onMicrosoft)} | Select-Object Id
 
             out-logfile -string "Graph call to obtain domains successful."
         }

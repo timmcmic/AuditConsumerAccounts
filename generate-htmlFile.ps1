@@ -71,6 +71,7 @@ function Generate-HTMLFile
                     new-HTMLTimeLineItem -HeadingText "Start Verify MSGraph" -Date $htmlTime.htmlVerifyMSGraph
                     new-HTMLTimeLineItem -HeadingText "Start Get MSGraph Users" -Date $htmlTime.htmlGetMSGraphUsers
                     new-HTMLTimeLineItem -HeadingText "Start Get MSGraph Domains" -Date $htmlTime.htmlGetMSGraphDomains
+                    new-HTMLTimeLineItem -HeadingText "Chunk Users to Test" -Date $htmlTime.htmlChunkUsers
                     new-HTMLTimeLineItem -HeadingText "Evaluate Addresses to Test" -Date $htmlTime.htmlAddressesToTest
                     new-HTMLTimeLineItem -HeadingText "Chunk Addresses To Test" -Date $htmlTime.htmlChunkAccounts
                     new-HTMLTimeLineItem -HeadingText "Evaluate Consumer Accounts" -Date $htmlTime.htmlConsumerAccountTest
