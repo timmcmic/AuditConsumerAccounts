@@ -233,16 +233,6 @@ function Start-AuditConsumerAccounts
     out-logfile -string "BEGIN Start-AuditConsumerAccounts"
     out-logfile -string "==============================================================="
 
-    if ($bringYourOwnAddresses -ne [array])
-    {
-        $bringYourOwnAddresses = @($bringYourOwnAddresses)
-    }
-
-    if ($bringYourOwnDomains -ne [array])
-    {
-        $bringYourOwnDomains = @($bringYourOwnDomains)
-    }
-
     out-logfile -string ("User supplied domains count: "+$bringYourOwnDomains.count)
     out-logfile -string ("User supplied addresses count: "+$bringYourOwnAddresses.Count)
 
@@ -270,7 +260,17 @@ function Start-AuditConsumerAccounts
 
         $htmlValues['ValidateAddressesProvided']=Get-Date
 
-        $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
+        if ($bringYourOwnAddresses.count -gt 0)
+        {
+            out-logfile -string "Address validation required."
+            
+            $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
+        }
+        else 
+        {
+            out-logfile -string "Address validation not required."
+        }
+
 
         $htmlValues['htmlGetMSGraphUsers']=Get-Date
 
@@ -280,7 +280,7 @@ function Start-AuditConsumerAccounts
         }
         else 
         {
-            if ($bringYourOwnAddresses[0] -is [psCustomObject])
+            if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
             {
                 out-logfile -string "Administrator has provided specific objects to test"
                 $userList = @()
@@ -356,16 +356,19 @@ function Start-AuditConsumerAccounts
         }
         elseif (($userList.count -lt $chunkSize) -or ($bringYourOwnAddresses.count -lt $chunkSize)) 
         {
-            if ($bringYourOwnAddresses[0] -is [PSCustomObject])
+            out-logfile -string "Addresses or user count < chunk size - do nothing."
+            if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
             {
+                out-logfile -string "Addresses are object type -> proceed."
                 $htmlValues['htmlChunkUsers']=Get-Date
                 $htmlValues['htmlAddressesToTest']=Get-Date
                 $addressesToTest = $bringYourOwnAddresses
             }
             else 
             {
-                $htmlValues['htmlAddressesToTest']=Get-Date
                 $htmlValues['htmlChunkUsers']=Get-Date
+                $htmlValues['htmlAddressesToTest']=Get-Date
+                out-logfile -string "Addresses are string type -> proceed."
                 $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
             }
         }
