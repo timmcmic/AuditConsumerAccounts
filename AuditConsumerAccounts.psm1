@@ -438,9 +438,14 @@ function Start-AuditConsumerAccounts
             out-logfile -string "Looping until all jobs have completed successfully."
 
             do {
-                $jobStatus = @(Get-Job -State "Running")+@(get-Job -state "NotStarted")
-                $jobStatus 
-                out-logfile -string ("Pending Job Count: "+$jobStatus.Count)
+                $jobStatusRunning = @(Get-Job -State "Running")
+                $jobStatusPending = @(get-Job -state "NotStarted")
+                $jobStatus = @($jobStatusRunning + $jobStatusPending)
+                $jobsCompleted = $chunkList.count - $jobStatus.Count
+                out-logfile -string ("Jobs in Progress: "+$jobStatusRunning.count)
+                out-logfile -string ("Jobs not Started: "+$jobStatusPending.count)
+                out-logfile -string ("Jobs Completed: "+$jobsCompleted)
+                out-logfile -string ("All Pending Job Count: "+$jobStatus.Count)
 
                 if ($jobStatus.count -gt 0)
                 {
