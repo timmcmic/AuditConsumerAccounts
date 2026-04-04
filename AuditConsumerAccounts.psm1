@@ -453,6 +453,7 @@ function Start-AuditConsumerAccounts
                     {   
                         $averageTime = $totalElapsedTime / $jobsCompleted
                         $previousJobCount = $jobsCompleted
+                        remove-CompletedJobs
                     }
                 }
                 else 
@@ -474,10 +475,7 @@ function Start-AuditConsumerAccounts
             
                 $end = Get-Date
                 $time = ($end - $start).TotalMinutes
-                $totalElapsedTime = $totalElapsedTime + $time
-
-                remove-CompletedJobs
-                
+                $totalElapsedTime = $totalElapsedTime + $time                
             } until (
                 $jobStatus.count -eq 0
             )
