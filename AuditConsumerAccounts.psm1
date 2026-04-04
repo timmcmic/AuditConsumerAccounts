@@ -475,6 +475,9 @@ function Start-AuditConsumerAccounts
                 $end = Get-Date
                 $time = ($end - $start).TotalMinutes
                 $totalElapsedTime = $totalElapsedTime + $time
+
+                remove-CompletedJobs
+                
             } until (
                 $jobStatus.count -eq 0
             )
