@@ -437,23 +437,50 @@ function Start-AuditConsumerAccounts
 
             out-logfile -string "Looping until all jobs have completed successfully."
 
+            $totalElapsedTime = 0
+            $previousJobCount = 0
+
             do {
+                $start = Get-Date
                 $jobStatusRunning = @(Get-Job -State "Running")
                 $jobStatusPending = @(get-Job -state "NotStarted")
                 $jobStatus = @($jobStatusRunning + $jobStatusPending)
                 $jobsCompleted = $chunkList.count - $jobStatus.Count
+
+                if ($jobsCompleted -gt 0)
+                {
+                    if ($jobsCompleted -ne $previousJobCount)
+                    {   
+                        $averageTime = $totalElapsedTime / $jobsCompleted
+                        $previousJobCount = $jobsCompleted
+                    }
+                }
+                else 
+                {
+                    $averageTime = 0
+                }
+
                 out-logfile -string ("Jobs in Progress: "+$jobStatusRunning.count)
                 out-logfile -string ("Jobs not Started: "+$jobStatusPending.count)
                 out-logfile -string ("Jobs Completed: "+$jobsCompleted)
                 out-logfile -string ("All Pending Job Count: "+$jobStatus.Count)
+                out-logfile -string ("Time Elapsed Processing Jobs in Minutes: "+$totalElapsedTime)
+                out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
 
                 if ($jobStatus.count -gt 0)
                 {
                     start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
                 }
+            
+                $end = Get-Date
+                $time = ($end - $start).TotalMinutes
+                $totalElapsedTime = $totalElapsedTime + $time
             } until (
                 $jobStatus.count -eq 0
             )
+
+            out-logfile -string ("Total Time Processing Jobs: "+$totalElapsedTime)
+            out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
 
             out-logfile -string "Collect all log files from the associated jobs."
 
