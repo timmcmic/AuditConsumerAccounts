@@ -10,19 +10,16 @@ function remove-CompletedJobs
 
     $jobCount = Get-Job
 
+    out-logfile -string ("Job Count: "+$jobCount.count.toString())
+
     if ($removeAll -eq $FALSE)
     {
-        if ($jobCount.count -gt 0)
-        {
-            out-logfile -string ("Job Count: "+$jobCount.count.toString())
-
-            try {
-                get-Job -state Completed | remove-job -erroraction STOP
-            }
-            catch {
-                out-logfile -string $_
-                out-logfile -string "Manual job cleanup required."
-            }
+        try {
+            get-Job -state Completed | remove-job -erroraction STOP
+        }
+        catch {
+            out-logfile -string $_
+            out-logfile -string "Manual job cleanup required."
         }
     }
     else 
@@ -36,7 +33,6 @@ function remove-CompletedJobs
         }
     }
     
-
     $jobCount = Get-Job
 
     [System.GC]::Collect()
