@@ -1,13 +1,32 @@
 function remove-CompletedJobs
 {
+    Param
+    (
+        [Parameter(Mandatory = $false)]
+        $removeAll=$FALSE
+    )
+
     out-logfile -string "Remove-CompletedJobs"
 
     $jobCount = Get-Job
 
-    if ($jobCount.count -gt 0)
+    if ($removeAll -eq $FALSE)
     {
-        out-logfile -string ("Job Count: "+$jobCount.count.toString())
+        if ($jobCount.count -gt 0)
+        {
+            out-logfile -string ("Job Count: "+$jobCount.count.toString())
 
+            try {
+                get-Job -state Completed | remove-job -erroraction STOP
+            }
+            catch {
+                out-logfile -string $_
+                out-logfile -string "Manual job cleanup required."
+            }
+        }
+    }
+    else 
+    {
         try {
             get-Job | remove-job -erroraction STOP
         }
@@ -16,6 +35,7 @@ function remove-CompletedJobs
             out-logfile -string "Manual job cleanup required."
         }
     }
+    
 
     $jobCount = Get-Job
 

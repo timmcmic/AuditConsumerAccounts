@@ -423,13 +423,14 @@ function Start-AuditConsumerAccounts
 
                     for ($i = 0 ; $i -lt $chunkList.count ; $i++)
                     {
+                        $jobName = "AuditConsumerAccounts_"+$i.tostring()
                         if ($i -eq 0)
                         {
-                            Start-ThreadJob -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ThrottleLimit 5
+                            Start-ThreadJob -name $jobName -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ThrottleLimit 5
                         }
                         else 
                         {
-                            Start-ThreadJob -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i]
+                            Start-ThreadJob -name $jobName -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i]
                         }
                     }
                 }
@@ -503,7 +504,7 @@ function Start-AuditConsumerAccounts
 
             remove-jobDirectories -logFolderPath $logFolderPath -baseName $logFileName
 
-            remove-completedJobs
+            remove-completedJobs -removeAll $TRUE
         }
         else 
         {
