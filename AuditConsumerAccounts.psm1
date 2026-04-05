@@ -339,6 +339,8 @@ function Start-AuditConsumerAccounts
                     [System.Threading.Monitor]::Exit($refObj)
                 } -ThrottleLimit 10
 
+                start-garbageCollect
+
                 $chunkList = @()
 
                 $returnListCount = $addressesToTest.Count

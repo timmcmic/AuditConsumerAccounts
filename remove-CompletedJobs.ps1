@@ -35,9 +35,7 @@ function remove-CompletedJobs
     
     $jobCount = Get-Job
 
-    [System.GC]::Collect()
-    [System.GC]::WaitForPendingFinalizers()
-    [System.GC]::Collect()
+    start-garbageCollect
 
     out-logfile -string ("Job Count: "+$jobCount.count.toString())
         
