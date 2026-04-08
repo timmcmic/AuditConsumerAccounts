@@ -401,6 +401,8 @@ function Start-AuditConsumerAccounts
         {
             out-logfile -string "The number of users required chunking - start thread jobs to process groups of users."
 
+            $jobsArray =@()
+
             switch ($msGraphValues.msGraphAuthenticationType) 
             {
                 $msGraphValues.msGraphCertificateAuth 
@@ -411,6 +413,24 @@ function Start-AuditConsumerAccounts
                     {
                         $jobName = "AuditConsumerAccounts_"+$i.tostring()
 
+                        try {
+                            $jobsArray += Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ErrorAction Stop
+                        }
+                        catch {
+                            out-logfile -string "Unable to start a job."
+                            out-logfile -string $_ -isError:$true
+                        }
+
+                        try {
+                            $jobsArray[$i] | Stop-Job -ErrorAction STOP
+                        }
+                        catch {
+                            out-logfile -string "Unable to stop the created job."
+                            out-logfile -string $_ -isError:$true
+                        }
+
+                        <#
+
                         if ($i -eq 0)
                         {
                             Start-ThreadJob -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ThrottleLimit 5
@@ -419,6 +439,7 @@ function Start-AuditConsumerAccounts
                         {
                             Start-ThreadJob -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i]
                         }
+                        #>    
                     }
                 }
                 $msGraphValues.msGraphClientSecretAuth 
@@ -428,6 +449,25 @@ function Start-AuditConsumerAccounts
                     for ($i = 0 ; $i -lt $chunkList.count ; $i++)
                     {
                         $jobName = "AuditConsumerAccounts_"+$i.tostring()
+
+                        try {
+                            $jobsArray += Start-Job -name $jobName -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -errorAction Stop
+
+                        }
+                        catch {
+                            out-logfile -string "Unable to start a job."
+                            out-logfile -string $_ -isError:$true
+                        }
+
+                        try {
+                            $jobsArray[$i] | Stop-Job -ErrorAction STOP
+                        }
+                        catch {
+                            out-logfile -string "Unable to stop the created job."
+                            out-logfile -string $_ -isError:$true
+                        }
+
+                        <#
                         if ($i -eq 0)
                         {
                             Start-ThreadJob -name $jobName -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ThrottleLimit 5
@@ -436,6 +476,7 @@ function Start-AuditConsumerAccounts
                         {
                             Start-ThreadJob -name $jobName -initializationScript {import-module "C:\Users\timmcmic\OneDrive - Microsoft\Repository\AuditConsumerAccounts\AuditConsumerAccounts.psd1" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i]
                         }
+                        #>    
                     }
                 }
             }
