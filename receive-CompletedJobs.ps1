@@ -7,7 +7,7 @@ function receive-completedJobs
     }
     catch {
         out-logfile -string $_
-        out-logfile -string "Manual job cleanup required."
+        out-logfile -string "Unable to receive the job." -errorAction STOP
     }
         
     out-logfile -string "End Receive-CompletedJobs"
