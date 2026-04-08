@@ -461,6 +461,7 @@ function Start-AuditConsumerAccounts
                     {   
                         $averageTime = $totalElapsedTime / $jobsCompleted
                         $previousJobCount = $jobsCompleted
+                        receive-completedJobs
                         remove-CompletedJobs
                     }
                 }
