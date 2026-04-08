@@ -320,12 +320,15 @@ function Start-AuditConsumerAccounts
             {
                 $htmlValues['htmlAddressesToTest']=Get-Date
                 $addressesToTest = $bringYourOwnAddresses
+                $bringYourOwnAddresses = $null
             }
             else 
             {
                 $function = get-command get-AddressesToTest
 
                 $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
+
+                $userList = $null
 
                 $htmlValues['htmlAddressesToTest']=Get-Date
 
@@ -399,9 +402,9 @@ function Start-AuditConsumerAccounts
 
         if (($chunkList.count -gt 0) -and (($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphCertificateAuth ) -or ($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphClientSecretAuth)))
         {
-            out-logfile -string "The number of users required chunking - start thread jobs to process groups of users."
+            $addressesToTest = $null
 
-            $jobsArray =@()
+            out-logfile -string "The number of users required chunking - start thread jobs to process groups of users."
 
             switch ($msGraphValues.msGraphAuthenticationType) 
             {
@@ -519,6 +522,8 @@ function Start-AuditConsumerAccounts
             out-logfile -string "Addresses provided - proceed with consumer testing."
 
             $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+
+            $addressesToTest = $null
         }
 
         if ($consumerAccountList.count -gt 0)
@@ -599,6 +604,8 @@ function Start-AuditConsumerAccounts
             out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
             out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
         }
+
+        $consumerAccountList = $null
 
         out-logfile -string 'Executing random throttling value between 5 and 10 minutes.'
 
