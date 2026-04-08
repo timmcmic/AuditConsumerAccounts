@@ -7,7 +7,7 @@ function receive-completedJobs
     }
     catch {
         out-logfile -string $_
-        out-logfile -string "Unable to receive the job." -errorAction STOP
+        out-logfile -string "Unable to receive the job." -isError:$true
     }
         
     out-logfile -string "End Receive-CompletedJobs"
