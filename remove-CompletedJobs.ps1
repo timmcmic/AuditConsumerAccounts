@@ -6,7 +6,7 @@ function remove-CompletedJobs
         $removeAll=$FALSE
     )
 
-    out-logfile -string "Remove-CompletedJobs"
+    out-logfile -string "Entering Remove-CompletedJobs"
 
     $jobCount = Get-Job
 
@@ -39,5 +39,5 @@ function remove-CompletedJobs
 
     out-logfile -string ("Job Count: "+$jobCount.count.toString())
         
-    out-logfile -string "End Remove-CompletedJobs"
+    out-logfile -string "Exiting Remove-CompletedJobs"
 }
