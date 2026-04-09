@@ -225,6 +225,8 @@ function Start-AuditConsumerAccounts
     $chunkList = @()
     $chunkSize = 50
 
+    $maxJobCount = 5
+
     #Start the log file.
 
     new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
@@ -408,6 +410,137 @@ function Start-AuditConsumerAccounts
 
             out-logfile -string "The number of users required chunking - start thread jobs to process groups of users."
 
+            $jobCounter = 0
+            $totalElapsedTime = 0
+            $previousJobCount = 0
+
+
+            out-logfile -string "Starting the first sequence of jobs..."
+
+            for ($i = 0 ; $i -lt $maxJobCount ; $i++)
+            {
+                $jobName = "AuditConsumerAccounts_"+$jobCounter.tostring()
+
+                switch ($msGraphValues.msGraphAuthenticationType) 
+                {
+                    $msGraphValues.msGraphCertificateAuth 
+                    {  
+                        out-logfile -string "Graph Certificate Jobs"
+
+                        try {
+                            Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ErrorAction Stop
+
+                        }
+                        catch {
+                            out-logfile -string "Unable to start job."
+                            out-logfile -string $_ -isError:$true
+                        }
+                    }
+                    $msGraphValues.msGraphClientSecretAuth 
+                    {  
+                        out-logfile -string "Graph Client Secret Auth"
+
+                        try {
+                            Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -errorAction STOP
+                        }
+                        catch {
+                            out-logfile -string "Unable to start job."
+                            out-logfile -string $_ -isError:$true
+                        }
+                    }
+                }
+
+                $jobCounter++
+            }
+
+            out-logfile -string "Start creating new jobs as existing jobs complete..."
+
+            do {
+                $start = Get-Date
+                $jobStatusRunning = @(Get-Job -State "Running")
+                $jobStatusPending = $chunkList.count - $jobsCompleted
+                $jobStatus = @($jobStatusRunning + $jobStatusPending)
+                
+                do {
+                    start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
+                } until (
+                    (Get-Job -State Running) -ne $maxJobCount
+                )
+
+                out-logfile -string "Max jobs not running - proceed with creating more jobs."
+
+                $jobsNotRunning = $maxJobCount - (Get-Job -State Running).count
+                $jobsCompleted = $jobsCompleted + $jobsNotRunning
+                out-logfile -string $jobsNotRunning.tostring()
+
+                for ($i = 0 ; $i -lt $jobsNotRunning ; $i++)
+                {
+                    $jobName = "AuditConsumerAccounts_"+$jobCounter.tostring()
+
+                    switch ($msGraphValues.msGraphAuthenticationType) 
+                    {
+                        $msGraphValues.msGraphCertificateAuth 
+                        {  
+                            out-logfile -string "Graph Certificate Jobs"
+
+                            try {
+                                Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ErrorAction Stop
+
+                            }
+                            catch {
+                                out-logfile -string "Unable to start job."
+                                out-logfile -string $_ -isError:$true
+                            }
+                        }
+                        $msGraphValues.msGraphClientSecretAuth 
+                        {  
+                            out-logfile -string "Graph Client Secret Auth"
+
+                            try {
+                                Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -errorAction STOP
+                            }
+                            catch {
+                                out-logfile -string "Unable to start job."
+                                out-logfile -string $_ -isError:$true
+                            }
+                        }
+                    }
+
+                    $jobCounter++
+                }
+
+                if ($jobsCompleted -gt 0)
+                {
+                    if ($jobsCompleted -ne $previousJobCount)
+                    {   
+                        $averageTime = $totalElapsedTime / $jobsCompleted
+                        $previousJobCount = $jobsCompleted
+                        receive-completedJobs
+                        remove-CompletedJobs
+                    }
+                }
+                else 
+                {
+                    $averageTime = 0
+                }
+
+                $end = Get-Date
+                $time = ($end - $start).TotalMinutes
+                $totalElapsedTime = $totalElapsedTime + $time
+                
+                out-logfile -string ("Jobs in Progress: "+$jobStatusRunning.count)
+                out-logfile -string ("Jobs not Started: "+$jobStatusPending.count)
+                out-logfile -string ("Jobs Completed: "+$jobsCompleted)
+                out-logfile -string ("All Pending Job Count: "+$jobStatus.Count)
+                out-logfile -string ("Time Elapsed Processing Jobs in Minutes: "+$totalElapsedTime)
+                out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
+
+            } until (
+                $jobsCompleted -eq $chunkList.Count
+            )
+
+            <#
+
             switch ($msGraphValues.msGraphAuthenticationType) 
             {
                 $msGraphValues.msGraphCertificateAuth 
@@ -493,6 +626,8 @@ function Start-AuditConsumerAccounts
             } until (
                 $jobStatus.count -eq 0
             )
+
+            #>
 
             out-logfile -string ("Total Time Processing Jobs: "+$totalElapsedTime)
             out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
