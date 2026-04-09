@@ -342,9 +342,9 @@ function Start-AuditConsumerAccounts
                     [System.Threading.Monitor]::Exit($refObj)
                 } -ThrottleLimit 25
 
-                start-garbageCollect
+                $chunkList = $null
 
-                $chunkList = @()
+                start-garbageCollect
 
                 $returnListCount = $addressesToTest.Count
 
@@ -403,6 +403,8 @@ function Start-AuditConsumerAccounts
         if (($chunkList.count -gt 0) -and (($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphCertificateAuth ) -or ($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphClientSecretAuth)))
         {
             $addressesToTest = $null
+
+            start-garbageCollect
 
             out-logfile -string "The number of users required chunking - start thread jobs to process groups of users."
 
