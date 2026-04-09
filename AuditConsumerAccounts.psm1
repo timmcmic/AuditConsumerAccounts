@@ -467,7 +467,7 @@ function Start-AuditConsumerAccounts
 
                     foreach ($job in $jobs)
                     {
-                        out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.status)
+                        out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                     }
 
                     start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
