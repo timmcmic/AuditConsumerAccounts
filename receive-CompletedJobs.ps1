@@ -7,7 +7,7 @@ function receive-completedJobs
     }
     catch {
         out-logfile -string $_
-        out-logfile -string "Unable to retrieve jobs." -isError:$true
+        out-logfile -string "Unable to retrieve jobs."
     }
 
     foreach ($job in $jobs)
@@ -17,7 +17,7 @@ function receive-completedJobs
         }
         catch {
             out-logfile -string $_
-            out-logfile -string "Unable to receive job." -isError:$true
+            out-logfile -string "Unable to receive job."
         }
     }
         
