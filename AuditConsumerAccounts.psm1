@@ -340,7 +340,7 @@ function Start-AuditConsumerAccounts
                     get-AddressesToTest -userList $_ -domainsList $using:domainsList -testPrimarySMTPOnly $using:testPrimarySMTPOnly -isBulk:$true
 
                     [System.Threading.Monitor]::Exit($refObj)
-                } -ThrottleLimit 10
+                } -ThrottleLimit 25
 
                 start-garbageCollect
 
