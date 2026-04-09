@@ -413,7 +413,7 @@ function Start-AuditConsumerAccounts
             $jobCounter = 0
             $totalElapsedTime = 0
             $previousJobCount = 0
-
+            $averageTime = 0
 
             out-logfile -string "Starting the first sequence of jobs..."
 
@@ -457,11 +457,10 @@ function Start-AuditConsumerAccounts
 
             do {
                 $start = Get-Date
-                $jobStatusRunning = @(Get-Job -State "Running")
                 $jobStatusPending = $chunkList.count - $jobsCompleted
-                $jobStatus = @($jobStatusRunning + $jobStatusPending)
                 
                 do {
+                    out-logfile -string "Max jobs running - sleep."
                     start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
                 } until (
                     (Get-Job -State Running) -ne $maxJobCount
@@ -470,8 +469,9 @@ function Start-AuditConsumerAccounts
                 out-logfile -string "Max jobs not running - proceed with creating more jobs."
 
                 $jobsNotRunning = $maxJobCount - (Get-Job -State Running).count
+                out-logfile -string ("Jobs to create: "+$jobsNotRunning.tostring())
                 $jobsCompleted = $jobsCompleted + $jobsNotRunning
-                out-logfile -string $jobsNotRunning.tostring()
+                out-logfile -string ("Jobs Completed: "+$jobsCompleted.toString())
 
                 for ($i = 0 ; $i -lt $jobsNotRunning ; $i++)
                 {
@@ -509,29 +509,13 @@ function Start-AuditConsumerAccounts
                     $jobCounter++
                 }
 
-                if ($jobsCompleted -gt 0)
-                {
-                    if ($jobsCompleted -ne $previousJobCount)
-                    {   
-                        $averageTime = $totalElapsedTime / $jobsCompleted
-                        $previousJobCount = $jobsCompleted
-                        receive-completedJobs
-                        remove-CompletedJobs
-                    }
-                }
-                else 
-                {
-                    $averageTime = 0
-                }
-
                 $end = Get-Date
                 $time = ($end - $start).TotalMinutes
                 $totalElapsedTime = $totalElapsedTime + $time
+                $averageTime = $totalElapsedTime / $jobsCompleted
                 
-                out-logfile -string ("Jobs in Progress: "+$jobStatusRunning.count)
-                out-logfile -string ("Jobs not Started: "+$jobStatusPending.count)
-                out-logfile -string ("Jobs Completed: "+$jobsCompleted)
-                out-logfile -string ("All Pending Job Count: "+$jobStatus.Count)
+                out-logfile -string ("Jobs Completed: "+$jobsCompleted.tostring())
+                out-logfile -string ("All Pending Job Count: "+$jobStatusPending)
                 out-logfile -string ("Time Elapsed Processing Jobs in Minutes: "+$totalElapsedTime)
                 out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
 
