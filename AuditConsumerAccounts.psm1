@@ -472,7 +472,7 @@ function Start-AuditConsumerAccounts
 
                     start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
                 } until (
-                    $jobs.count -ne $maxJobCount
+                    (Get-Job -State Running).count -ne $maxJobCount
                 )
 
                 out-logfile -string "Max jobs not running - proceed with creating more jobs."
