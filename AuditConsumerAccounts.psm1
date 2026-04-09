@@ -463,7 +463,7 @@ function Start-AuditConsumerAccounts
                     out-logfile -string "Max jobs running - sleep."
                     start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
                 } until (
-                    (Get-Job -State Running) -ne $maxJobCount
+                    (Get-Job -State Running).count -ne $maxJobCount
                 )
 
                 out-logfile -string "Max jobs not running - proceed with creating more jobs."
@@ -510,12 +510,12 @@ function Start-AuditConsumerAccounts
                 $end = Get-Date
                 $time = ($end - $start).TotalMinutes
                 $totalElapsedTime = $totalElapsedTime + $time
+                $averageTime = $totalElapsedTime / $jobsCompleted
                 $jobsCompleted = $jobsCompleted + $jobsNotRunning
                 $jobStatusPending = $chunkList.count - $jobsCompleted
-                $averageTime = $totalElapsedTime / $jobsCompleted
                 
                 out-logfile -string ("Jobs Completed: "+$jobsCompleted.tostring())
-                out-logfile -string ("All Pending Job Count: "+$jobStatusPending)
+                out-logfile -string ("All Pending Job Count: "+$jobStatusPending.tostring())
                 out-logfile -string ("Time Elapsed Processing Jobs in Minutes: "+$totalElapsedTime)
                 out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
 
