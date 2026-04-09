@@ -452,6 +452,7 @@ function Start-AuditConsumerAccounts
                 }
 
                 $jobCounter++
+                out-logfile -string ("Job Counter: "+$jobCounter.tostring())
             }
 
             out-logfile -string "Start creating new jobs as existing jobs complete..."
@@ -505,6 +506,7 @@ function Start-AuditConsumerAccounts
                     }
 
                     $jobCounter++
+                    out-logfile -string ("Job Counter: "+$jobCounter.tostring())
                 }
 
                 $end = Get-Date
