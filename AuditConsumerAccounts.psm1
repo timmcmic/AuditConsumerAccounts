@@ -481,6 +481,7 @@ function Start-AuditConsumerAccounts
                 out-logfile -string "Max jobs not running - proceed with creating more jobs."
 
                 $jobsNotRunning = $maxJobCount - (Get-Job -State Running).count
+                $jobsRunning = Get-Job -State Running
                 out-logfile -string ("Jobs to create: "+$jobsNotRunning.tostring())
 
                 out-logfile -string "Determine if we have reached the maximum number of jobs - if not start the next job."
@@ -532,11 +533,12 @@ function Start-AuditConsumerAccounts
                 $end = Get-Date
                 $time = ($end - $start).TotalMinutes
                 $totalElapsedTime = $totalElapsedTime + $time
-                $jobsCompleted = $jobsCompleted + $jobsNotRunning
+                $jobsCompleted = ($jobsCompleted + $jobsNotRunning) - $jobsRunning
                 $averageTime = $totalElapsedTime / $jobsCompleted
                 $jobStatusPending = $chunkList.count - $jobsCompleted
                 
                 out-logfile -string ("Jobs Completed: "+$jobsCompleted.tostring())
+                out-logfile -string ("Jobs Running: "+$jobsRunning.tostring())
                 out-logfile -string ("All Pending Job Count: "+$jobStatusPending.tostring())
                 out-logfile -string ("Time Elapsed Processing Jobs in Minutes: "+$totalElapsedTime)
                 out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
