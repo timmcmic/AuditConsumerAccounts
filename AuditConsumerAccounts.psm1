@@ -481,7 +481,7 @@ function Start-AuditConsumerAccounts
                 out-logfile -string "Max jobs not running - proceed with creating more jobs."
 
                 $jobsNotRunning = $maxJobCount - (Get-Job -State Running).count
-                $jobsRunning = Get-Job -State Running
+                $jobsRunning = (Get-Job -State Running).Count
                 out-logfile -string ("Jobs to create: "+$jobsNotRunning.tostring())
 
                 out-logfile -string "Determine if we have reached the maximum number of jobs - if not start the next job."
