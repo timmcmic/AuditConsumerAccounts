@@ -427,7 +427,8 @@ function Start-AuditConsumerAccounts
                                     out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                                 }
 
-                                $addressesToTest += @(Get-Job | Wait-Job -Any | Receive-Job)
+                                Get-Job | Wait-Job -Any | Out-Null
+                                $addressesToTest += @(Get-Job -state Completed | Receive-Job)
                             }
 
                             Remove-CompletedJobs
@@ -456,7 +457,8 @@ function Start-AuditConsumerAccounts
                                 out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                             }
 
-                            $addressesToTest +=@(Get-Job | Wait-Job | receive-job)
+                            Get-Job | Wait-Job | Out-Null
+                            $addressesToTest += @(Get-Job -state Completed | Receive-Job)
                         }
                     }
                 }
