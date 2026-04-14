@@ -174,7 +174,7 @@ function Start-AuditConsumerAccounts
                 catch {
                     out-logfile -string "Unable to start job."
                     out-logfile -string $_ -isError:$true
-                }                
+                }
             }
             $msGraphValues.msGraphClientSecretAuth 
             {  
@@ -295,6 +295,7 @@ function Start-AuditConsumerAccounts
     $chunkSize = 50
 
     $maxJobCount = 5
+    $maxAddressJobCount = 25
 
     #Start the log file.
 
@@ -395,13 +396,15 @@ function Start-AuditConsumerAccounts
             }
             else 
             {
-                $userList = $null
+                $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
 
                 $htmlValues['htmlAddressesToTest']=Get-Date
 
+                out-logfile -string "The number of users required chunking - start jobs to process groups of users."
+                
                 for ($i = 0 ; $i -lt $chunkList.count ; $i++)
                 {
-                    if ($i -lt $maxJobCount)
+                    if ($i -lt $maxAddressJobCount)
                     {
                         out-logfile -string "Provision the first 5 jobs."
 
@@ -435,7 +438,7 @@ function Start-AuditConsumerAccounts
                         }
                         else
                         {
-                            while ((Get-Job -State Running).count -eq $maxJobCount)
+                            while ((Get-Job -State Running).count -eq $maxAddressJobCount)
                             {
                                 start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until time to create final job..."
                             }
@@ -453,7 +456,7 @@ function Start-AuditConsumerAccounts
                                 out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                             }
 
-                            $addressToTest += @(Get-Job | Wait-Job | Receive-Job)
+                            $addressesToTest +=@(Get-Job | Wait-Job | receive-job)
                         }
                     }
                 }
