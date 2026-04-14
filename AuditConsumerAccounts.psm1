@@ -320,7 +320,7 @@ function Start-AuditConsumerAccounts
     $consumerAccountList
 
     $chunkList = @()
-    $chunkSize = 5
+    $chunkSize = 50
 
     $maxJobCount = 5
 
