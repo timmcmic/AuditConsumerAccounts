@@ -119,11 +119,15 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [array]$bringYourOwnDomains=@(),
         [Parameter(Mandatory = $false)]
-        $jobNumber = -1
+        $jobNumber = -1,
+        [Parameter(Mandatory = $false)]
+        [boolean]$getAddressesOnly = $false
     )
 
     function CreateJob
     {
+        $jobName = "AuditConsumerAccounts_"+$i.tostring()
+
         switch ($msGraphValues.msGraphAuthenticationType) 
         {
             $msGraphValues.msGraphCertificateAuth 
@@ -131,7 +135,7 @@ function Start-AuditConsumerAccounts
                 out-logfile -string "Graph Certificate Jobs"
 
                 try {
-                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -ErrorAction Stop
+                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList -ErrorAction Stop
 
                 }
                 catch {
@@ -144,11 +148,72 @@ function Start-AuditConsumerAccounts
                 out-logfile -string "Graph Client Secret Auth"
 
                 try {
-                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i] -errorAction STOP
+                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList -errorAction STOP
                 }
                 catch {
                     out-logfile -string "Unable to start job."
                     out-logfile -string $_ -isError:$true
+                }
+            }
+        }
+    }
+    function CreateAddressJob
+    {
+        $jobName = "AuditConsumerAccounts_"+$i.tostring()
+
+        switch ($msGraphValues.msGraphAuthenticationType) 
+        {
+            $msGraphValues.msGraphCertificateAuth 
+            {  
+                out-logfile -string "Graph Certificate Jobs"
+
+                if ($i -eq 0)
+                {
+                    try {
+                        Start-ThreadJob -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9] -getAddressesOnly $args[10] -testPrimarySMTPOnly $args[11]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList,$TRUE,$testPrimarySMTPOnly -ErrorAction Stop -throttleLimit 10
+
+                    }
+                    catch {
+                        out-logfile -string "Unable to start job."
+                        out-logfile -string $_ -isError:$true
+                    }
+                }
+                else 
+                {
+                    try {
+                        Start-ThreadJob -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9] -getAddressesOnly $args[10] -testPrimarySMTPOnly $args[11]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList,$TRUE,$testPrimarySMTPOnly -ErrorAction Stop
+
+                    }
+                    catch {
+                        out-logfile -string "Unable to start job."
+                        out-logfile -string $_ -isError:$true
+                    }
+                }
+                
+            }
+            $msGraphValues.msGraphClientSecretAuth 
+            {  
+                out-logfile -string "Graph Client Secret Auth"
+
+                if ($i -eq 0)
+                {
+                    try {
+                        Start-ThreadJob -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9] -getAddressesOnly $args[10] -testPrimarySMTPOnly $args[11]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList,$TRUE,$testPrimarySMTPOnly -errorAction STOP -ThrottleLimit 10
+                    }
+                    catch {
+                        out-logfile -string "Unable to start job."
+                        out-logfile -string $_ -isError:$true
+                    }
+                }
+                else 
+                {
+                    try {
+                        Start-ThreadJob -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9] -getAddressesOnly $args[10] -testPrimarySMTPOnly $args[11]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList,$TRUE,$testPrimarySMTPOnly -errorAction STOP
+                    }
+                    catch {
+                        out-logfile -string "Unable to start job."
+                        out-logfile -string $_ -isError:$true
+                    }
                 }
             }
         }
@@ -280,7 +345,7 @@ function Start-AuditConsumerAccounts
     $telemetryValues['telemetryTelemetry']=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
     $telemetryValues['telemetryHTML']=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
 
-    if ($recursiveAddresses -eq $NULL)
+    if (($recursiveAddresses -eq $NULL) -and ($getAddressesOnly -eq $false))
     {
         $htmlValues['htmlStartMSGraph']=Get-Date
 
@@ -367,15 +432,34 @@ function Start-AuditConsumerAccounts
 
                 $htmlValues['htmlAddressesToTest']=Get-Date
 
-                $addressesToTest = $chunklist | ForEach-Object -Parallel {
-                    #$refObj = $using:function
-                    #[System.Threading.Monitor]::Enter($refObj)
-                    ${function:Get-AddressesToTest} = $using:Function
+                for ($i = 0 ; $i -lt $chunkList.count ; $i++)
+                {
+                    CreateAddressJob
+                }
 
-                    get-AddressesToTest -userList $_ -domainsList $using:domainsList -testPrimarySMTPOnly $using:testPrimarySMTPOnly -isBulk:$true
+                do {
+                    $jobs = Get-Job
 
-                    #[System.Threading.Monitor]::Exit($refObj)
-                } -ThrottleLimit 10
+                    foreach ($job in $jobs)
+                    {
+                        out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                    }
+
+                    start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
+
+                } until (
+                    (Get-Job -State Running).count -eq 0
+                )
+
+                $addressesToTest = get-job | wait-job | Receive-Job
+
+                get-multipleLogFiles -logFolderPath $logFolderPath -baseName $logFileName -fileName $logFileName
+
+                remove-jobFiles -logFolderPath $logFolderPath -baseName $logFileName
+
+                remove-jobDirectories -logFolderPath $logFolderPath -baseName $logFileName
+
+                remove-completedJobs -removeAll $TRUE
 
                 $chunkList = $null
 
@@ -452,7 +536,6 @@ function Start-AuditConsumerAccounts
             for ($i = 0 ; $i -lt $chunkList.count ; $i++)
             {
                 $start = Get-Date
-                $jobName = "AuditConsumerAccounts_"+$i.tostring()
 
                 if ($i -lt $maxJobCount)
                 {
@@ -626,6 +709,14 @@ function Start-AuditConsumerAccounts
 
         disable-allPowerShellSessions
     }
+    elseif (($recursiveAddresses -ne $NULL) -and ($getAddressesOnly -eq $true))
+    {
+        out-logfile -string "Job created to obtain addresses only."
+
+        get-addressesToTest -userList $recursiveAddresses -domainsList $recursiveDomains -testPrimarySMTPOnly $testPrimarySMTPOnly -isBulk:$true
+
+        exit
+    }
     else 
     {   
         out-logfile -string "Starting account testing based off provided domains and data."
@@ -642,7 +733,7 @@ function Start-AuditConsumerAccounts
 
         out-logfile -string 'Executing random throttling value between 5 and 10 minutes.'
 
-        #start-sleep -seconds ((Get-Random -Minimum 5 -Maximum 10)*60)
-        start-sleep -seconds ((Get-Random -Minimum 1 -Maximum 2)*60)
+        start-sleep -seconds ((Get-Random -Minimum 5 -Maximum 10)*60)
+        #start-sleep -seconds ((Get-Random -Minimum 1 -Maximum 2)*60)
     }
 }

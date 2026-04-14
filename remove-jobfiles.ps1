@@ -24,8 +24,6 @@ function remove-JobFiles
 
          Write-Host $files.Count.tostring()
 
-         <#
-
         foreach ($file in $files)
         {
             out-logfile -string $file
@@ -36,18 +34,6 @@ function remove-JobFiles
             catch {
                 write-error $_
             }
-        }
-
-        #>
-
-        $files | foreach-object -Parallel {
-            try {
-                remove-Item -path $_ -Force -ErrorAction STOP
-            }
-            catch {
-                out-logfile -string "Unable to remove a file - manual deletion required."
-            out-logfile -string $_
-            } -ThrottleLimit 10
         }
     }
   
