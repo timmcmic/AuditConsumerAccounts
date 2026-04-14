@@ -295,7 +295,7 @@ function Start-AuditConsumerAccounts
     $chunkSize = 50
 
     $maxJobCount = 5
-    $maxAddressJobCount = 25
+    $maxAddressJobCount = 10
 
     #Start the log file.
 
