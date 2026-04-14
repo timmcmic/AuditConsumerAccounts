@@ -406,7 +406,7 @@ function Start-AuditConsumerAccounts
                 {
                     if ($i -lt $maxAddressJobCount)
                     {
-                        out-logfile -string "Provision the first 5 jobs."
+                        out-logfile -string ("Provision the first "+$maxAddressJobCount.tostring()+" jobs...")
 
                         CreateAddressJob
                     }
