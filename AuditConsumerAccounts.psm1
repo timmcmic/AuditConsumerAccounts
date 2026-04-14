@@ -428,6 +428,7 @@ function Start-AuditConsumerAccounts
                                 }
 
                                 Get-Job | Wait-Job -Any | Out-Null
+                                out-logfile -string "Job completed - receive results."
                                 $addressesToTest += @(Get-Job -state Completed | Receive-Job)
                             }
 
@@ -458,6 +459,7 @@ function Start-AuditConsumerAccounts
                             }
 
                             Get-Job | Wait-Job | Out-Null
+                            out-logfile -string "Job completed - receive results."
                             $addressesToTest += @(Get-Job -state Completed | Receive-Job)
                         }
                     }
