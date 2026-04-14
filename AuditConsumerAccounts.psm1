@@ -416,7 +416,7 @@ function Start-AuditConsumerAccounts
 
                         if ($i+1 -ne $chunkList.count)
                         {
-                            while ((Get-Job -state Running).count -ge $maxJobCount)
+                            while ((Get-Job -state Running).count -ge $maxAddressJobCount)
                             {
                                 out-logfile -string "Max jobs currently in progress - waiting to start next job."
 
