@@ -445,6 +445,10 @@ function Start-AuditConsumerAccounts
                         out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                     }
 
+                    out-logfile -string ("Jobs Running: "+($jobs | where {$_.state -eq "Running"}).count)
+                    out-logfile -string ("Jobs Completed: "+($jobs | where {$_.state -eq "Completed"}).count)
+                    out-logfile -string ("Jobs Not Started: "+($jobs | where {$_.state -eq "NotStarted"}).count)
+
                     start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until all jobs completed..."
 
                 } until (
