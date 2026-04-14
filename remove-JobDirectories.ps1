@@ -18,6 +18,8 @@ function remove-JobDirectories
 
     out-logfile -string ("Directory Count: "+$directories.count.tostring())
 
+    <#
+
     foreach ($directory in $directories)
     {
         out-logfile -string ("Processing directory: "+$directory)
@@ -29,6 +31,18 @@ function remove-JobDirectories
             out-logfile -string "Unable to remove a job directory - manual deletion required."
             out-logfile -string $_
         }
+    }
+
+    #>
+
+    $directories | foreach-object -Parallel {
+        try {
+            remove-Item -path $_ -Recurse -Force -ErrorAction STOP
+        }
+        catch {
+            out-logfile -string "Unable to remove a job directory - manual deletion required."
+            out-logfile -string $_
+        } -ThrottleLimit 10
     }
         
     out-logfile -string "End Remove-JobDirectories"
