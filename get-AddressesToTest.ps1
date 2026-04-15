@@ -159,6 +159,8 @@ function get-AddressesToTest
         out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
         out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
     }
+
+    out-logfile -string $returnlist.count.totsring()
     
     out-logfile -string "End Get-AddressToTest"
 

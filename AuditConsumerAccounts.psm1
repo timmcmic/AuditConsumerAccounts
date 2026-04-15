@@ -437,7 +437,9 @@ function Start-AuditConsumerAccounts
                                     out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                                 }
 
-                                $addressesToTest = @(Get-Job | Wait-Job -Any | Receive-Job)
+                                #$addressesToTest += @(Get-Job | Wait-Job -Any | Receive-Job)
+                                Get-Job | Wait-Job | Out-Null
+                                $addressesToTest += @(Get-Job -State Completed | Receive-Job)
                                 out-logfile -string ("Count of addresses discovered: "+$addressesToTest.Count.tostring())
     
                             }
@@ -468,7 +470,9 @@ function Start-AuditConsumerAccounts
                                 out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                             }
 
-                            $addressesToTest = @(Get-Job | Wait-Job | Receive-Job)
+                            #$addressesToTest += @(Get-Job | Wait-Job | Receive-Job)
+                            Get-Job | Wait-Job | Out-Null
+                            $addressesToTest += @(Get-Job -State Completed | Receive-Job)
                             out-logfile -string ("Count of addresses discovered: "+$addressesToTest.Count.tostring())
                         }
                     }
