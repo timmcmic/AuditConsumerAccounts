@@ -401,6 +401,16 @@ function Start-AuditConsumerAccounts
                 $htmlValues['htmlAddressesToTest']=Get-Date
 
                 out-logfile -string "The number of users required chunking - start jobs to process groups of users."
+
+                if ($chunkList.count -lt $maxAddressJobCount)
+                {
+                    out-logfile -string "Number of chunks is less that specified max - resetting."
+                    $maxAddressJobCount = $chunkList.Count-1
+                }
+                else 
+                {
+                    out-logfile -string "Number of chunks is greater than maxAddressJobCount."
+                }
                 
                 for ($i = 0 ; $i -lt $chunkList.count ; $i++)
                 {
@@ -543,6 +553,16 @@ function Start-AuditConsumerAccounts
             out-logfile -string "The number of users required chunking - start jobs to process groups of users."
 
             $jobsCompleted = 0
+
+            if ($chunkList.count -lt $maxJobCount)
+            {
+                out-logfile -string "Number of chunks less than jobs to create."
+                $maxJobCount = $chunkList.count - 1
+            }
+            else 
+            {
+                out-logfile -string "Max job counter greater than chunk list - proceed."    
+            }
             
             for ($i = 0 ; $i -lt $chunkList.count ; $i++)
             {
@@ -587,6 +607,13 @@ function Start-AuditConsumerAccounts
                         while ((Get-Job -State Running).count -eq $maxJobCount)
                         {
                             start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until time to create final job..."
+
+                            $jobs = Get-Job -state Running
+
+                            foreach ($job in $jobs)
+                            {
+                                out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                            }
                         }
 
                         out-logfile -string "Provision final job..."
@@ -602,7 +629,17 @@ function Start-AuditConsumerAccounts
                             out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                         }
 
-                        Get-Job | Wait-Job | Out-Null
+                        while ((Get-Job -State Running).count -ne 0)
+                        {
+                            start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until final jobs finish..."
+
+                            $jobs = Get-Job -state Running
+
+                            foreach ($job in $jobs)
+                            {
+                                out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                            }
+                        }
                     }
 
                     $jobCounter = $chunkList.Count
