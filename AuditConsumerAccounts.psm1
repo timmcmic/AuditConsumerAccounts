@@ -297,6 +297,8 @@ function Start-AuditConsumerAccounts
     $maxJobCount = 5
     $maxAddressJobCount = 10
 
+    $isDebug = $PSBoundParameters.ContainsKey('Debug') -and $PSBoundParameters['Debug']
+
     #Start the log file.
 
     new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
@@ -396,39 +398,76 @@ function Start-AuditConsumerAccounts
             }
             else 
             {
-                $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
-
-                $htmlValues['htmlAddressesToTest']=Get-Date
-
-                out-logfile -string "The number of users required chunking - start jobs to process groups of users."
-
-                if ($chunkList.count -lt $maxAddressJobCount)
+                if ($isDebug -eq $FALSE)
                 {
-                    out-logfile -string "Number of chunks is less that specified max - resetting."
-                    $maxAddressJobCount = $chunkList.Count-1
-                }
-                else 
-                {
-                    out-logfile -string "Number of chunks is greater than maxAddressJobCount."
-                }
-                
-                for ($i = 0 ; $i -lt $chunkList.count ; $i++)
-                {
-                    if ($i -lt $maxAddressJobCount)
+                    out-logfile -string 'Standard list processing - no debug.'
+
+                    $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
+
+                    $htmlValues['htmlAddressesToTest']=Get-Date
+
+                    out-logfile -string "The number of users required chunking - start jobs to process groups of users."
+
+                    if ($chunkList.count -lt $maxAddressJobCount)
                     {
-                        out-logfile -string ("Provision the first "+$maxAddressJobCount.tostring()+" jobs...")
-
-                        CreateAddressJob
+                        out-logfile -string "Number of chunks is less that specified max - resetting."
+                        $maxAddressJobCount = $chunkList.Count-1
                     }
                     else 
                     {
-                        out-logfile -string "Sleep and provision new jobs as a job completes."
-
-                        if ($i+1 -ne $chunkList.count)
+                        out-logfile -string "Number of chunks is greater than maxAddressJobCount."
+                    }
+                    
+                    for ($i = 0 ; $i -lt $chunkList.count ; $i++)
+                    {
+                        if ($i -lt $maxAddressJobCount)
                         {
-                            while ((Get-Job -state Running).count -ge $maxAddressJobCount)
+                            out-logfile -string ("Provision the first "+$maxAddressJobCount.tostring()+" jobs...")
+
+                            CreateAddressJob
+                        }
+                        else 
+                        {
+                            out-logfile -string "Sleep and provision new jobs as a job completes."
+
+                            if ($i+1 -ne $chunkList.count)
                             {
-                                out-logfile -string "Max jobs currently in progress - waiting to start next job."
+                                while ((Get-Job -state Running).count -ge $maxAddressJobCount)
+                                {
+                                    out-logfile -string "Max jobs currently in progress - waiting to start next job."
+
+                                    $jobs = Get-Job -state Running
+
+                                    foreach ($job in $jobs)
+                                    {
+                                        out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                                    }
+
+                                    #$addressesToTest += @(Get-Job | Wait-Job -Any | Receive-Job)
+                                    Get-Job | Wait-Job | Out-Null
+                                    $addressesToTest += @(Get-Job -State Completed | Receive-Job)
+                                    out-logfile -string ("Count of addresses discovered: "+$addressesToTest.Count.tostring())
+        
+                                }
+
+                                Remove-CompletedJobs
+
+                                out-logfile -string "Provision next job..."
+
+                                CreateAddressJob
+                            }
+                            else
+                            {
+                                while ((Get-Job -State Running).count -eq $maxAddressJobCount)
+                                {
+                                    start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until time to create final job..."
+                                }
+
+                                out-logfile -string "Provision final job..."
+
+                                CreateAddressJob
+                
+                                out-logfile -string "Final jobs currently in progress - waiting to start next job."
 
                                 $jobs = Get-Job -state Running
 
@@ -437,55 +476,36 @@ function Start-AuditConsumerAccounts
                                     out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
                                 }
 
-                                #$addressesToTest += @(Get-Job | Wait-Job -Any | Receive-Job)
+                                #$addressesToTest += @(Get-Job | Wait-Job | Receive-Job)
                                 Get-Job | Wait-Job | Out-Null
                                 $addressesToTest += @(Get-Job -State Completed | Receive-Job)
                                 out-logfile -string ("Count of addresses discovered: "+$addressesToTest.Count.tostring())
-    
                             }
-
-                            Remove-CompletedJobs
-
-                            out-logfile -string "Provision next job..."
-
-                            CreateAddressJob
-                        }
-                        else
-                        {
-                            while ((Get-Job -State Running).count -eq $maxAddressJobCount)
-                            {
-                                start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until time to create final job..."
-                            }
-
-                            out-logfile -string "Provision final job..."
-
-                            CreateAddressJob
-            
-                            out-logfile -string "Final jobs currently in progress - waiting to start next job."
-
-                            $jobs = Get-Job -state Running
-
-                            foreach ($job in $jobs)
-                            {
-                                out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
-                            }
-
-                            #$addressesToTest += @(Get-Job | Wait-Job | Receive-Job)
-                            Get-Job | Wait-Job | Out-Null
-                            $addressesToTest += @(Get-Job -State Completed | Receive-Job)
-                            out-logfile -string ("Count of addresses discovered: "+$addressesToTest.Count.tostring())
                         }
                     }
+
+                    get-multipleLogFiles -logFolderPath $logFolderPath -baseName $logFileName -fileName $logFileName
+
+                    remove-jobFiles -logFolderPath $logFolderPath -baseName $logFileName
+
+                    remove-jobDirectories -logFolderPath $logFolderPath -baseName $logFileName
+
+                    remove-completedJobs -removeAll $TRUE
+
                 }
+                else 
+                {
+                    out-logfile -string 'Debug list processing - debug specified.'
 
-                get-multipleLogFiles -logFolderPath $logFolderPath -baseName $logFileName -fileName $logFileName
+                    $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $userList
 
-                remove-jobFiles -logFolderPath $logFolderPath -baseName $logFileName
+                    $htmlValues['htmlAddressesToTest']=Get-Date
 
-                remove-jobDirectories -logFolderPath $logFolderPath -baseName $logFileName
+                    out-logfile -string "Obtaining the addresses to test."
 
-                remove-completedJobs -removeAll $TRUE
-
+                    $addressesToTest = $chunkList | foreach-object {get-AddressesToTest -userList $_ -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly}
+                }
+                
                 $chunkList = $null
 
                 start-garbageCollect
