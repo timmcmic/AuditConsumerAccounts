@@ -119,7 +119,9 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [array]$bringYourOwnDomains=@(),
         [Parameter(Mandatory = $false)]
-        $jobNumber = -1
+        $jobNumber = -1,
+        [Parameter(Mandatory = $false)]
+        [boolean]$getAddressesOnly = $false
     )
 
     function CreateJob
@@ -147,6 +149,39 @@ function Start-AuditConsumerAccounts
 
                 try {
                     Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList -errorAction STOP
+                }
+                catch {
+                    out-logfile -string "Unable to start job."
+                    out-logfile -string $_ -isError:$true
+                }
+            }
+        }
+    }
+    function CreateAddressJob
+    {
+        $jobName = "AuditConsumerAccounts_"+$i.tostring()
+
+        switch ($msGraphValues.msGraphAuthenticationType) 
+        {
+            $msGraphValues.msGraphCertificateAuth 
+            {  
+                out-logfile -string "Graph Certificate Jobs"
+
+                try {
+                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9] -getAddressesOnly $args[10] -testPrimarySMTPOnly $args[11]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList,$TRUE,$testPrimarySMTPOnly -ErrorAction Stop
+
+                }
+                catch {
+                    out-logfile -string "Unable to start job."
+                    out-logfile -string $_ -isError:$true
+                }
+            }
+            $msGraphValues.msGraphClientSecretAuth 
+            {  
+                out-logfile -string "Graph Client Secret Auth"
+
+                try {
+                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9] -getAddressesOnly $args[10] -testPrimarySMTPOnly $args[11]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList,$TRUE,$testPrimarySMTPOnly -errorAction STOP
                 }
                 catch {
                     out-logfile -string "Unable to start job."
@@ -300,7 +335,7 @@ function Start-AuditConsumerAccounts
         $telemetryValues['telemetryHTML']="None"
     }
     
-    if ($recursiveAddresses -eq $NULL)
+    if (($recursiveAddresses -eq $NULL) -and ($getAddressesOnly -eq $false))
     {
         $htmlValues['htmlStartMSGraph']=Get-Date
 
@@ -348,10 +383,6 @@ function Start-AuditConsumerAccounts
         {
             out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
         }
-        else 
-        {
-            out-logfile -string "No users were returned with the graph call created." -isError:$true
-        }
 
         $htmlValues['htmlGetMSGraphDomains']=Get-Date
 
@@ -368,10 +399,6 @@ function Start-AuditConsumerAccounts
         {
             out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
         }
-        else 
-        {
-            out-logfile -string "No domains were returned with the graph call created." -isError:$TRUE  
-        }
 
         $htmlValues['htmlChunkUsers']=Get-Date
 
@@ -385,14 +412,112 @@ function Start-AuditConsumerAccounts
             }
             else 
             {
-                out-logfile -string 'None debug - use standard processing.'
+                if ($isDebug -eq $true)
+                {
+                    out-logfile -string 'Standard list processing - no debug.'
 
-                $htmlValues['htmlChunkUsers']=Get-Date
-                $htmlValues['htmlAddressesToTest']=Get-Date
+                    $chunkList = get-chunkList -userBatchSize $addressChunkSize -listToChunk $userList
 
-                out-logfile -string "Obtaining the addresses to test."
+                    $htmlValues['htmlAddressesToTest']=Get-Date
 
-                $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly -isBulk:$true
+                    out-logfile -string "The number of users required chunking - start jobs to process groups of users."
+
+                    if ($chunkList.count -lt $maxAddressJobCount)
+                    {
+                        out-logfile -string "Number of chunks is less that specified max - resetting."
+                        $maxAddressJobCount = $chunkList.Count-1
+                    }
+                    else 
+                    {
+                        out-logfile -string "Number of chunks is greater than maxAddressJobCount."
+                    }
+                    
+                    for ($i = 0 ; $i -lt $chunkList.count ; $i++)
+                    {
+                        if ($i -lt $maxAddressJobCount)
+                        {
+                            out-logfile -string ("Provision the first "+$maxAddressJobCount.tostring()+" jobs...")
+
+                            CreateAddressJob
+                        }
+                        else 
+                        {
+                            out-logfile -string "Sleep and provision new jobs as a job completes."
+
+                            if ($i+1 -ne $chunkList.count)
+                            {
+                                while ((Get-Job -state Running).count -ge $maxAddressJobCount)
+                                {
+                                    out-logfile -string "Max jobs currently in progress - waiting to start next job."
+
+                                    $jobs = Get-Job -state Running
+
+                                    foreach ($job in $jobs)
+                                    {
+                                        out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                                    }
+
+                                    #$addressesToTest += @(Get-Job | Wait-Job -Any | Receive-Job)
+                                    Get-Job | Wait-Job | Out-Null
+                                    $addressesToTest += @(Get-Job -State Completed | Receive-Job)
+                                    out-logfile -string ("Count of addresses discovered: "+$addressesToTest.Count.tostring())
+        
+                                }
+
+                                Remove-CompletedJobs
+
+                                out-logfile -string "Provision next job..."
+
+                                CreateAddressJob
+                            }
+                            else
+                            {
+                                while ((Get-Job -State Running).count -eq $maxAddressJobCount)
+                                {
+                                    start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until time to create final job..."
+                                }
+
+                                out-logfile -string "Provision final job..."
+
+                                CreateAddressJob
+                
+                                out-logfile -string "Final jobs currently in progress - waiting to start next job."
+
+                                $jobs = Get-Job -state Running
+
+                                foreach ($job in $jobs)
+                                {
+                                    out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                                }
+
+                                #$addressesToTest += @(Get-Job | Wait-Job | Receive-Job)
+                                Get-Job | Wait-Job | Out-Null
+                                $addressesToTest += @(Get-Job -State Completed | Receive-Job)
+                                out-logfile -string ("Count of addresses discovered: "+$addressesToTest.Count.tostring())
+                            }
+                        }
+                    }
+
+                    get-multipleLogFiles -logFolderPath $logFolderPath -baseName $logFileName -fileName $logFileName
+
+                    remove-jobFiles -logFolderPath $logFolderPath -baseName $logFileName
+
+                    remove-jobDirectories -logFolderPath $logFolderPath -baseName $logFileName
+
+                    remove-completedJobs -removeAll $TRUE
+
+                }
+                else 
+                {
+                    out-logfile -string 'None debug - use standard processing.'
+
+                    $htmlValues['htmlChunkUsers']=Get-Date
+                    $htmlValues['htmlAddressesToTest']=Get-Date
+
+                    out-logfile -string "Obtaining the addresses to test."
+
+                    $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly -isBulk:$true
+                }
                 
                 $chunkList = $null
 
@@ -668,6 +793,14 @@ function Start-AuditConsumerAccounts
         }
 
         disable-allPowerShellSessions
+    }
+    elseif (($recursiveAddresses -ne $NULL) -and ($getAddressesOnly -eq $true))
+    {
+        out-logfile -string "Job created to obtain addresses only."
+
+        get-addressesToTest -userList $recursiveAddresses -domainsList $recursiveDomains -testPrimarySMTPOnly $testPrimarySMTPOnly -isBulk:$true
+
+        exit
     }
     else 
     {   
