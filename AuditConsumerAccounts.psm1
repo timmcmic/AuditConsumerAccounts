@@ -116,6 +116,14 @@ function Start-AuditConsumerAccounts
         [array]$bringYourOwnDomains=@()
     )
 
+    function GetAddresses
+    {
+        $htmlValues['htmlChunkUsers']=Get-Date
+        $htmlValues['htmlAddressesToTest']=Get-Date
+        out-logfile -string "Addresses are string type -> proceed."
+        $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
+    }
+
     #Initialize telemetry collection.
 
     $appInsightAPIKey = "63d673af-33f4-401c-931e-f0b64a218d89"
@@ -298,14 +306,6 @@ function Start-AuditConsumerAccounts
     }
 
     out-logfile -string "Addresses or user count < chunk size - do nothing."
-
-    function GetAddresses
-    {
-        $htmlValues['htmlChunkUsers']=Get-Date
-        $htmlValues['htmlAddressesToTest']=Get-Date
-        out-logfile -string "Addresses are string type -> proceed."
-        $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
-    }
 
     if ($bringYourOwnAddresses.count -gt 0)
     {
