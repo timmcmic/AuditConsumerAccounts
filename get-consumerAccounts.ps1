@@ -38,7 +38,7 @@ function get-ConsumerAccounts
 
         $returnList.add($account)
 
-        start-sleepProgress -sleepSeconds 2 -sleepString "Stadard sleep after each call..."
+        start-sleepProgress -sleepSeconds (get-Random -minimum 2 -maximum 5) -sleepString "Stadard sleep after each call..."
     }
 
     write-progress -activity "Processing Recipient" -completed
