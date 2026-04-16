@@ -122,6 +122,8 @@ function Start-AuditConsumerAccounts
         $htmlValues['htmlAddressesToTest']=Get-Date
         out-logfile -string "Addresses are string type -> proceed."
         $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
+
+        return $addressesToTest
     }
 
     #Initialize telemetry collection.
@@ -305,8 +307,6 @@ function Start-AuditConsumerAccounts
         out-logfile -string "No domains were returned with the graph call created." -isError:$TRUE  
     }
 
-    out-logfile -string "Addresses or user count < chunk size - do nothing."
-
     if ($bringYourOwnAddresses.count -gt 0)
     {
         if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
@@ -319,13 +319,13 @@ function Start-AuditConsumerAccounts
         else 
         {
             out-logfile -string 'Addresses are not imported objects -> get addresses'
-            GetAddresses
+            $addressesToTest = GetAddresses
         }
     }
     else 
     {
         out-logfile -string 'Get addresses for user objects...'
-        GetAddresses
+        $addressesToTest = GetAddresses
     }
 
     $telemetryValues.telemetryNumberOfUsers=[double]$userList.count
