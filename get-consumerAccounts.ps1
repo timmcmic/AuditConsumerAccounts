@@ -19,6 +19,7 @@ function get-ConsumerAccounts
 
     $counter = $accountList.count
     $totalTime = 0
+    $longThrottle = 0
     
     foreach ($account in $accountList)
     {
@@ -33,6 +34,7 @@ function get-ConsumerAccounts
 
         if ($account.accountError -eq $TRUE)
         {
+            $longThrottle++
             start-sleepProgress -sleepSeconds ((Get-Random -Minimum 5 -Maximum 10)*60) -sleepString "Last request throttled - sleeping random 5 - 10 min" -sleepParentID 1 -sleepID 2
         }
 
@@ -50,6 +52,7 @@ function get-ConsumerAccounts
         $averageTime = $totalElapsedTime / ($accountList.count - $counter)
         out-logfile -string ("Total elapsed time: "+$totalElapsedTime)
         out-logfile -string ("Average account processing time: "+$averageTime)
+        out-logfile -string ("Number of long throttle operations: "+$longThrottle.tostring())
     }
 
     write-progress -activity "Processing Recipient" -completed
