@@ -23,7 +23,7 @@ function get-ConsumerAccounts
 
         out-logfile -string ("Testing consumer account for: "+$account.address)
 
-        write-progress -activity "Processing Recipient" -status $account.UPN -PercentComplete $PercentComplete
+        write-progress -activity "Processing Recipient" -status $account.UPN -PercentComplete $PercentComplete -id 1
 
         $PercentComplete += $ProgressDelta
 
@@ -31,14 +31,14 @@ function get-ConsumerAccounts
 
         if ($account.accountError -eq $TRUE)
         {
-            start-sleepProgress -sleepSeconds ((Get-Random -Minimum 5 -Maximum 10)*60) -sleepString "Last request throttled - sleeping random 5 - 10 min"
+            start-sleepProgress -sleepSeconds ((Get-Random -Minimum 5 -Maximum 10)*60) -sleepString "Last request throttled - sleeping random 5 - 10 min" -sleepParentID 1 -sleepID 2
         }
 
         out-logfile -string "Successfully tested for consumer account."
 
         $returnList.add($account)
 
-        start-sleepProgress -sleepSeconds (get-Random -minimum 2 -maximum 5) -sleepString "Stadard sleep after each call..."
+        start-sleepProgress -sleepSeconds (get-Random -minimum 2 -maximum 5) -sleepString "Stadard sleep after each call..." -sleepParentID 1 -sleepID 2
     }
 
     write-progress -activity "Processing Recipient" -completed
