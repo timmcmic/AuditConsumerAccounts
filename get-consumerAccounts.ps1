@@ -29,11 +29,16 @@ function get-ConsumerAccounts
 
         $account = Get-MSIDReliableStatus -outputObject $account -errorAction STOP
 
+        if ($account.accountError -eq $TRUE)
+        {
+            start-sleepProgress -sleepSeconds ((Get-Random -Minimum 5 -Maximum 10)*60) -sleepString "Last request throttled - sleeping random 5 - 10 min"
+        }
+
         out-logfile -string "Successfully tested for consumer account."
 
         $returnList.add($account)
 
-        Start-Sleep -s 1
+        start-sleepProgress -sleepSeconds 2 -sleepString "Stadard sleep after each call..."
     }
 
     write-progress -activity "Processing Recipient" -completed
