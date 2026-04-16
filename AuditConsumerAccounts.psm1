@@ -190,23 +190,12 @@ function Start-AuditConsumerAccounts
 
     #Set the execution windows name.
 
-    if ($jobNumber -eq -1)
-    {
-        $windowTitle = "Start-AuditConsumerAccounts"
-        $host.ui.RawUI.WindowTitle = $windowTitle
-    }
+    $windowTitle = "Start-AuditConsumerAccounts"
+    $host.ui.RawUI.WindowTitle = $windowTitle
 
     #Define global variables.
 
-    if ($jobNumber -eq -1)
-    {
-         [string]$global:staticFolderName="\AuditConsumerAccounts\"
-    }
-    else 
-    {
-         [string]$global:staticFolderName="\AuditConsumerAccounts\"+$jobNumber.toString()+"\"
-    }
-   
+    [string]$global:staticFolderName="\AuditConsumerAccounts\"
 
     #Define local variables.
 
@@ -215,16 +204,6 @@ function Start-AuditConsumerAccounts
     $domainsList
     $addressesToTest
     $consumerAccountList
-
-    $chunkList = @()
-    $chunkSize = 50
-    $addressChunkSize = 5000
-
-    $maxJobCount = 5
-    $maxAddressJobCount = 5
-
-    #$isDebug = $PSBoundParameters.ContainsKey('Debug') -and $PSBoundParameters['Debug']
-    $isDebug = $false
 
     #Start the log file.
 
@@ -293,7 +272,7 @@ function Start-AuditConsumerAccounts
     {
         out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
     }
-    else 
+    elseif (($userList.count -eq 0) -and ($bringYourOwnAddresses.count -eq 0)) 
     {
         out-logfile -string "No users were returned with the graph call created." -isError:$true
     }
@@ -319,19 +298,34 @@ function Start-AuditConsumerAccounts
     }
 
     out-logfile -string "Addresses or user count < chunk size - do nothing."
-    if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
-    {
-        out-logfile -string "Addresses are object type -> proceed."
-        $htmlValues['htmlChunkUsers']=Get-Date
-        $htmlValues['htmlAddressesToTest']=Get-Date
-        $addressesToTest = $bringYourOwnAddresses
-    }
-    else 
+
+    function GetAddresses
     {
         $htmlValues['htmlChunkUsers']=Get-Date
         $htmlValues['htmlAddressesToTest']=Get-Date
         out-logfile -string "Addresses are string type -> proceed."
         $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
+    }
+
+    if ($bringYourOwnAddresses.count -gt 0)
+    {
+        if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
+        {
+            out-logfile -string "Addresses are object type -> proceed."
+            $htmlValues['htmlChunkUsers']=Get-Date
+            $htmlValues['htmlAddressesToTest']=Get-Date
+            $addressesToTest = $bringYourOwnAddresses
+        }
+        else 
+        {
+            out-logfile -string 'Addresses are not imported objects -> get addresses'
+            GetAddresses
+        }
+    }
+    else 
+    {
+        out-logfile -string 'Get addresses for user objects...'
+        GetAddresses
     }
 
     $telemetryValues.telemetryNumberOfUsers=[double]$userList.count
