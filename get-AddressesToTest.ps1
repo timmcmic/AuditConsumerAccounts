@@ -63,19 +63,30 @@ function get-AddressesToTest
             {
                 out-logfile -string ("Processing Address: "+ $user.mail)
 
-                $outputObject = New-Object PSObject -Property @{
-                    ID = $user.id
-                    UPN = $user.userPrincipalName
-                    Address = $user.mail
-                    AccountPresent = $false
-                    AccountError=$false
-                    AccountErrorText = ""
-                    RequestID = ""
-                    RequestResult = ""
-                    TimeStamp = ""
-                }
+                $tempDomain = $user.mail.split("@")
 
-                $returnList.add($outputObject)
+                if ($domainslist.Id.contains($tempDomain[1]))
+                {
+                    out-logfile -string "Email address in domains specified."
+
+                        $outputObject = New-Object PSObject -Property @{
+                        ID = $user.id
+                        UPN = $user.userPrincipalName
+                        Address = $user.mail
+                        AccountPresent = $false
+                        AccountError=$false
+                        AccountErrorText = ""
+                        RequestID = ""
+                        RequestResult = ""
+                        TimeStamp = ""
+                    }
+
+                    $returnList.add($outputObject)
+                }
+                else 
+                {
+                    out-logfile -string "Skipping address - no in domains specified."
+                }
             }
             else 
             {
