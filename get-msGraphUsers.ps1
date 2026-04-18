@@ -3,30 +3,55 @@ function Get-MSGraphUsers
     Param
     (
         [Parameter(Mandatory = $false)]
-        [array]$bringYourOwnAddresses=@()
+        [array]$bringYourOwnAddresses=@(),
+        [Parameter(Mandatory = $false)]
+        $graphRecipientFilter
     )
 
     #Declare local variables.
 
     $propertiesToObtain="ID,UserPrincipalName,ProxyAddresses,Mail"
+    $testString = "None"
 
     out-logfile -string "Begin Get-MSGraphUsers"
 
     if ($bringYourOwnAddresses.count -eq 0)
     {
-        try 
+        out-logfile -string "Determine if a recipient filter was provided."
+
+        if ($graphRecipientFilter -eq $testString)
         {
-            out-logfile -string "Using graph call to obtain all users."
+            out-logfile -string "A recipient filter was provided"
 
-            $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
-            #$userList = [System.Collections.Generic.List[Object]]@(get-MGUser -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
+            try 
+            {
+                $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -filter $graphRecipientFilter -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
+                #$userList = [System.Collections.Generic.List[Object]]@(get-MGUser -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
 
-            out-logfile -string "Graph call to obtain users successful."
+                out-logfile -string "Graph call to obtain users successful."
+            }
+            catch 
+            {
+                out-logfile -string "Graph call to obtain users failed."
+                out-logfile -string $_ -isError:$true
+            }
         }
-        catch 
+        else 
         {
-            out-logfile -string "Graph call to obtain users failed."
-            out-logfile -string $_ -isError:$true
+            try 
+            {
+                out-logfile -string "Using graph call to obtain all users."
+
+                $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
+                #$userList = [System.Collections.Generic.List[Object]]@(get-MGUser -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
+
+                out-logfile -string "Graph call to obtain users successful."
+            }
+            catch 
+            {
+                out-logfile -string "Graph call to obtain users failed."
+                out-logfile -string $_ -isError:$true
+            }
         }
     }
     else 

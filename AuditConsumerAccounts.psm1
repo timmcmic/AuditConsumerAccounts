@@ -101,6 +101,8 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
         [string]$msGraphUserPermissions,
+        [Parameter(Mandatory = $false)]
+        $graphRecipientFilter="None",
         #Define other mandatory parameters
         [Parameter(Mandatory = $true)]
         [string]$logFolderPath,
