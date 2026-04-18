@@ -127,6 +127,7 @@ function get-AddressesToTest
                                 AccountError=$false
                                 AccountErrorText = ""
                                 RequestID = ""
+                                RequestResult = ""
                                 TimeStamp = ""
                             }
 

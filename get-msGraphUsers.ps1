@@ -5,7 +5,7 @@ function Get-MSGraphUsers
         [Parameter(Mandatory = $false)]
         [array]$bringYourOwnAddresses=@(),
         [Parameter(Mandatory = $false)]
-        $graphRecipientFilter
+        $msGraphRecipientFilter
     )
 
     #Declare local variables.
@@ -19,13 +19,13 @@ function Get-MSGraphUsers
     {
         out-logfile -string "Determine if a recipient filter was provided."
 
-        if ($graphRecipientFilter -eq $testString)
+        if ($msGraphRecipientFilter -ne $testString)
         {
             out-logfile -string "A recipient filter was provided"
 
             try 
             {
-                $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -filter $graphRecipientFilter -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
+                $userList = [System.Collections.Generic.List[Object]]@(get-MGUser -all -Property $propertiesToObtain -filter $msGraphRecipientFilter -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
                 #$userList = [System.Collections.Generic.List[Object]]@(get-MGUser -Property $propertiesToObtain -errorAction Stop | Select-Object ID,userPrincipalName,proxyAddresses,Mail)
 
                 out-logfile -string "Graph call to obtain users successful."

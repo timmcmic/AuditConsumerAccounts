@@ -102,7 +102,7 @@ function Start-AuditConsumerAccounts
         [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
         [string]$msGraphUserPermissions,
         [Parameter(Mandatory = $false)]
-        $graphRecipientFilter="None",
+        $msGraphRecipientFilter="None",
         #Define other mandatory parameters
         [Parameter(Mandatory = $true)]
         [string]$logFolderPath,
@@ -331,7 +331,7 @@ function Start-AuditConsumerAccounts
 
         if ($bringYourOwnAddresses.count -eq 0)
         {
-            $userList = @(get-MSGraphUsers)
+            $userList = @(get-MSGraphUsers -msGraphRecipientFilter $msGraphRecipientFilter)
 
             if ($userList.count -eq 0)
             {
@@ -377,60 +377,24 @@ function Start-AuditConsumerAccounts
         }
 
         $htmlValues['htmlChunkUsers']=Get-Date
+        $htmlValues['htmlAddressesToTest']=Get-Date
 
-        if (($userList.count -ge $chunkSize) -or ($bringYourOwnAddresses.count -ge $chunkSize))
+        if ($bringYourOwnAddresses.count -gt 0)
         {
-            if ($bringYourOwnAddresses[0] -is [PSCustomObject])
-            {
-                $htmlValues['htmlAddressesToTest']=Get-Date
-                $addressesToTest = $bringYourOwnAddresses
-                $bringYourOwnAddresses = $null
-            }
-            else 
-            {
-                out-logfile -string 'None debug - use standard processing.'
-
-                $htmlValues['htmlChunkUsers']=Get-Date
-                $htmlValues['htmlAddressesToTest']=Get-Date
-
-                out-logfile -string "Obtaining the addresses to test."
-
-                $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly -isBulk:$true
-                
-                $chunkList = $null
-
-                start-garbageCollect
-
-                $returnListCount = $addressesToTest.Count
-
-                out-logfile -string "Sort and unique the return list."
-
-                $addressesToTest = $addressesToTest | Sort-Object -Property ID,Address -Unique
-
-                $returnListCountSorted = $addressesToTest.count
-
-                out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
-                out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
-                out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
-            }
-        }
-        elseif (($userList.count -lt $chunkSize) -or ($bringYourOwnAddresses.count -lt $chunkSize)) 
-        {
-            out-logfile -string "Addresses or user count < chunk size - do nothing."
             if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
             {
                 out-logfile -string "Addresses are object type -> proceed."
-                $htmlValues['htmlChunkUsers']=Get-Date
-                $htmlValues['htmlAddressesToTest']=Get-Date
                 $addressesToTest = $bringYourOwnAddresses
             }
             else 
             {
-                $htmlValues['htmlChunkUsers']=Get-Date
-                $htmlValues['htmlAddressesToTest']=Get-Date
                 out-logfile -string "Addresses are string type -> proceed."
                 $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
             }
+        }
+        else 
+        {
+            $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
         }
         
         if ($addressesToTest.count -gt 0)
