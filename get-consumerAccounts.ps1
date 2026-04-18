@@ -20,6 +20,7 @@ function get-ConsumerAccounts
     $counter = $accountList.count
     $totalTime = 0
     $longThrottle = 0
+    $totalElapsedTime = 0
     
     foreach ($account in $accountList)
     {

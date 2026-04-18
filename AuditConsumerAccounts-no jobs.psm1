@@ -1,0 +1,417 @@
+#############################################################################################
+# DISCLAIMER:																				#
+#																							#
+# THE SAMPLE SCRIPTS ARE NOT SUPPORTED UNDER ANY MICROSOFT STANDARD SUPPORT					#
+# PROGRAM OR SERVICE. THE SAMPLE SCRIPTS ARE PROVIDED AS IS WITHOUT WARRANTY				#
+# OF ANY KIND. MICROSOFT FURTHER DISCLAIMS ALL IMPLIED WARRANTIES INCLUDING, WITHOUT		#
+# LIMITATION, ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR OF FITNESS FOR A PARTICULAR		#
+# PURPOSE. THE ENTIRE RISK ARISING OUT OF THE USE OR PERFORMANCE OF THE SAMPLE SCRIPTS		#
+# AND DOCUMENTATION REMAINS WITH YOU. IN NO EVENT SHALL MICROSOFT, ITS AUTHORS, OR			#
+# ANYONE ELSE INVOLVED IN THE CREATION, PRODUCTION, OR DELIVERY OF THE SCRIPTS BE LIABLE	#
+# FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF BUSINESS	#
+# PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, OR OTHER PECUNIARY LOSS)	#
+# ARISING OUT OF THE USE OF OR INABILITY TO USE THE SAMPLE SCRIPTS OR DOCUMENTATION,		#
+# EVEN IF MICROSOFT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES						#
+#############################################################################################
+
+function Start-AuditConsumerAccounts
+{
+    <#
+    .SYNOPSIS
+
+    This function begins the process of collecting information for the purposes of auditing consumer accounts in the Microsoft ecosystem based off domains and addresses in EntraID.
+
+    .DESCRIPTION
+
+    Trigger function.
+
+    .PARAMETER LOGFOLDERPATH
+
+    *REQUIRED*
+    This is the logging directory for storing the migration log and all backup XML files.
+    If running multiple SINGLE instance migrations use different logging directories.
+
+    .PARAMETER msGraphEnvironmentName
+
+    The MSGraph environment where to invoke commands.
+
+    .PARAMETER msGraphTenantID
+
+    The msGraphTenantID where the graph commands should be invoked.
+
+    .PARAMETER msGraphCertificateThumbprint
+
+    This is the graph certificate thumbprint with the associated app id.
+   
+    .OUTPUTS
+
+    Creates a CSV and HTML report of all consumer accounts located based off proxy addresses and UPNs in the EntraID environment
+
+    .NOTES
+
+    The following blog posts maintain documentation regarding this module.
+
+    https://timmcmic.wordpress.com.  
+
+    Refer to the first pinned blog post that is the table of contents.
+
+    
+    .EXAMPLE
+
+    Start-DistributionListMigration -groupSMTPAddress $groupSMTPAddress -globalCatalogServer server.domain.com -activeDirectoryCredential $cred -logfolderpath c:\temp -dnNoSyncOU "OU" -exchangeOnlineCredential $cred -azureADCredential $cred
+
+    .EXAMPLE
+
+    Start-DistributionListMigration -groupSMTPAddress $groupSMTPAddress -globalCatalogServer server.domain.com -activeDirectoryCredential $cred -logfolderpath c:\temp -dnNoSyncOU "OU" -exchangeOnlineCredential $cred -azureADCredential $cred -enableHybridMailFlow:$TRUE -triggerUpgradeToOffice365Group:$TRUE
+
+    .EXAMPLE
+
+    Start-DistributionListMigration -groupSMTPAddress $groupSMTPAddress -globalCatalogServer server.domain.com -activeDirectoryCredential $cred -logfolderpath c:\temp -dnNoSyncOU "OU" -exchangeOnlineCredential $cred -azureADCredential $cred -enableHybridMailFlow:$TRUE -triggerUpgradeToOffice365Group:$TRUE -useCollectedOnPremMailboxFolderPermissions:$TRUE -useCollectedOffice365MailboxFolderPermissions:$TRUE -useCollectedOnPremSendAs:$TRUE -useCollectedOnPremFullMailboxAccess:$TRUE -useCollectedOffice365FullMailboxAccess:$TRUE
+
+    #>
+
+     [cmdletbinding()]
+
+    Param
+    (
+        #Define Microsoft Graph Parameters
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [ValidateSet("China","Global","USGov","USGovDod")]
+        [string]$msGraphEnvironmentName,
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [string]$msGraphTenantID,
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
+        [string]$msGraphCertificateThumbprint,
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [string]$msGraphApplicationID,
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]        
+        [string]$msGraphClientSecret,
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [ValidateSet("Domain.Read.All","Domain.ReadWrite.All")]        
+        [string]$msGraphDomainPermissions,
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
+        [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
+        [string]$msGraphUserPermissions,
+        #Define other mandatory parameters
+        [Parameter(Mandatory = $true)]
+        [string]$logFolderPath,
+        #Define telemetry parameters
+        [Parameter(Mandatory = $false)]
+        [boolean]$allowTelemetryCollection=$TRUE,
+        #Define optional paramters
+        [Parameter(Mandatory = $false)]
+        [boolean]$testPrimarySMTPOnly=$false,
+        [Parameter(Mandatory = $false)]
+        [array]$bringYourOwnAddresses=@(),
+        [Parameter(Mandatory = $false)]
+        [array]$bringYourOwnDomains=@()
+    )
+
+    function GetAddresses
+    {
+        $htmlValues['htmlChunkUsers']=Get-Date
+        $htmlValues['htmlAddressesToTest']=Get-Date
+        out-logfile -string "Addresses are string type -> proceed."
+        $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
+
+        return $addressesToTest
+    }
+
+    #Initialize telemetry collection.
+
+    $appInsightAPIKey = "63d673af-33f4-401c-931e-f0b64a218d89"
+    $traceModuleName = "AuditConsumerAccounts"
+
+    if ($allowTelemetryCollection -eq $TRUE)
+    {
+        start-telemetryConfiguration -allowTelemetryCollection $allowTelemetryCollection -appInsightAPIKey $appInsightAPIKey -traceModuleName $traceModuleName
+    }
+
+    #Create powershell hash table.
+
+    $powershellModules = @{}
+    $powershellModules['Authentication']="Microsoft.Graph.Authentication"
+    $powershellModules['Users']="Microsoft.Graph.Users"
+    $powershellModules['Directory']="Microsoft.Graph.Identity.DirectoryManagement"
+    $powershellModules['Telemetry']="TelemetryHelper"
+    $powershellModules['HTML']="PSWriteHTML"
+    $powershellModules['Identity']="MSIdentityTools"
+    $powershellModules['AuditConsumerAccounts']="AuditConsumerAccounts"
+
+
+    #Create the telemetry values hash table.
+
+    $telemetryValues = @{}
+    $telemetryValues['telemetryAuditConsumerAccounts']="None"
+    $telemetryValues['telemetryMSIdentityTools']="None"
+    $telemetryValues['telemetryMSGraphAuthentication']="None"
+    $telemetryValues['telemetryMSGraphUsers']="None"
+    $telemetryValues['telemetryMSGraphDirectory']="None"
+    $telemetryValues['telemetryHTML']="None"
+    $telemetryValues['telemetryTelemetry']="None"
+    $telemetryValues['telemetryOSVersion']="None"
+    $telemetryValues['telemetryStartTime']=(get-UniversalDateTime)
+    $telemetryValues['telemetryEndTime']="None"
+    $telemetryValues['telemetryElapsedSeconds']=[double]0
+    $telemetryValues['telemetryEventName']="Start-AuditConsumerAccounts"
+    $telemetryValues['telemetryNumberOfUsers']=[double]0
+    $telemetryValues['telemetryNumberofAddresses']=[double]0
+    $telemetryValues['telemetryNumberOfConsumerAccounts']=[double]0
+    $telemetryValues['telemetryNumberOfConsumerAccountsErrors']=[double]0
+
+
+    #Create MSGraphHashTable
+
+    $msGraphValues = @{}
+    $msGraphValues['msGraphEnvironmentName']=$msGraphEnvironmentName
+    $msGraphValues['msGraphTenantID']=$msGraphTenantID
+    $msGraphValues['msGraphApplicationID']=$msGraphApplicationID
+    $msGraphValues['msGraphCertificateThumbprint']=$msGraphCertificateThumbprint
+    $msGraphValues['msGraphClientSecret']=$msGraphClientSecret
+    $msGraphValues['msGraphDomainPermissions']=$msGraphDomainPermissions
+    $msGraphValues['msGraphUserPermissions']=$msGraphUserPermissions
+    $msGraphValues['msGraphAuthenticationType']=$PSCmdlet.ParameterSetName
+    $msGraphValues['msGraphCertificateAuth']="Certificate"
+    $msGraphValues['msGraphInteractiveAuth']="Interactive"
+    $msGraphValues['msGraphClientSecretAuth']="ClientSecret"
+
+    #Create HTML Table
+
+    $htmlValues = @{}
+    $htmlValues['htmlStartTime']=Get-Date
+
+    #Create export table
+
+    $exportNames = @{}
+    $exportNames['usersXML']="-UsersXML"
+    $exportNames['domainsCSV']="-DomainsCSV"
+    $exportNames['addressesToTextXML']="-AddressToTestXML"
+    $exportNames['consumerAccountsXML']="-ConsumerAccounts"
+    $exportNames['consumerAccountsErrorsXML']="-ConsumerAccountsErrors"
+
+    #Set the execution windows name.
+
+    $windowTitle = "Start-AuditConsumerAccounts"
+    $host.ui.RawUI.WindowTitle = $windowTitle
+
+    #Define global variables.
+
+    [string]$global:staticFolderName="\AuditConsumerAccounts\"
+
+    #Define local variables.
+
+    [string]$logFileName = "AuditConsumerAccounts"
+    $userList
+    $domainsList
+    $addressesToTest
+    $consumerAccountList
+
+    #Start the log file.
+
+    new-logFile -logFileName $logFileName -logFolderPath $logFolderPath
+
+    out-logfile -string "==============================================================="
+    out-logfile -string "BEGIN Start-AuditConsumerAccounts"
+    out-logfile -string "==============================================================="
+
+    out-logfile -string ("User supplied domains count: "+$bringYourOwnDomains.count)
+    out-logfile -string ("User supplied addresses count: "+$bringYourOwnAddresses.Count)
+
+    $htmlValues['htmlStartPowershellValidation']=Get-Date
+
+    $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryAuditConsumerAccounts']=Test-PowerShellModule -powershellModuleName $powershellModules.AuditConsumerAccounts -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryTelemetry']=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
+    $telemetryValues['telemetryHTML']=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE  
+
+    $htmlValues['htmlStartMSGraph']=Get-Date
+
+    out-logfile -string "Establish graph connection."
+
+    new-graphConnection -graphHashTable $msGraphValues
+
+    $htmlValues['htmlVerifyMSGraph']=Get-Date
+
+    verify-graphConnection -graphHashTable $msGraphValues
+
+    $htmlValues['ValidateAddressesProvided']=Get-Date
+
+    if ($bringYourOwnAddresses.count -gt 0)
+    {
+        out-logfile -string "Address validation required."
+        
+        $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
+    }
+    else 
+    {
+        out-logfile -string "Address validation not required."
+    }
+
+    $htmlValues['htmlGetMSGraphUsers']=Get-Date
+
+    if ($bringYourOwnAddresses.count -eq 0)
+    {
+        $userList = get-MSGraphUsers
+    }
+    else 
+    {
+        if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
+        {
+            out-logfile -string "Administrator has provided specific objects to test"
+            $userList = @()
+        }
+        else 
+        {
+            $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
+        }
+    }
+
+    if ($userList.count -gt 0)
+    {
+        out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
+    }
+    elseif (($userList.count -eq 0) -and ($bringYourOwnAddresses.count -eq 0)) 
+    {
+        out-logfile -string "No users were returned with the graph call created." -isError:$true
+    }
+
+    $htmlValues['htmlGetMSGraphDomains']=Get-Date
+
+    if($bringYourOwnDomains.count -eq 0)
+    {
+        $domainsList = get-msGraphDomains
+    }
+    else 
+    {
+        $domainsList = get-msGraphDomains -bringYourOwnDomains $bringYourOwnDomains
+    }
+    
+    if ($domainsList.count -gt 0)
+    {
+        out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
+    }
+    else 
+    {
+        out-logfile -string "No domains were returned with the graph call created." -isError:$TRUE  
+    }
+
+    if ($bringYourOwnAddresses.count -gt 0)
+    {
+        if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
+        {
+            out-logfile -string "Addresses are object type -> proceed."
+            $htmlValues['htmlChunkUsers']=Get-Date
+            $htmlValues['htmlAddressesToTest']=Get-Date
+            $addressesToTest = $bringYourOwnAddresses
+        }
+        else 
+        {
+            out-logfile -string 'Addresses are not imported objects -> get addresses'
+            $addressesToTest = GetAddresses
+        }
+    }
+    else 
+    {
+        out-logfile -string 'Get addresses for user objects...'
+        $addressesToTest = GetAddresses
+    }
+
+    $telemetryValues.telemetryNumberOfUsers=[double]$userList.count
+    $userList = $null
+    $domainsList = $NULL
+
+    if ($addressesToTest.count -gt 0)
+    {
+        out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
+    }
+    else
+    {
+        out-logfile -string "No addresses were returned for evaluation." -isError:$true
+    }
+
+    $htmlValues['htmlConsumerAccountTest']=Get-Date
+
+    $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+    $telemetryValues.telemetryNumberOfConsumerAccounts=[double](@($consumerAccountList | where {$_.accountError -eq $false}).count)
+    $telemetryValues.telemetryNumberOfConsumerAccountsErrors=[double](@($consumerAccountList | where {$_.accountError -eq $true}).count)
+
+    $telemetryValues.telemetryNumberofAddresses=[double]$addressesToTest.count
+    $addressesToTest = $null
+
+    if ($consumerAccountList.count -gt 0)
+    {
+        out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+        out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+    }
+
+    if (($consumerAccountList | where {$_.accountError -eq $TRUE}).count -gt 0)
+    {
+        out-xmlFile -itemToExport ($consumerAccountList | where {$_.accountError -eq $TRUE}) -itemNameToExport $exportNames.consumerAccountsErrorsXML
+    }
+
+        
+       
+    $telemetryValues.telemetryEndTime=(Get-UniversalDateTime)
+    $telemetryValues.telemetryElapsedSeconds=[double](Get-ElapsedTime -startTime $telemetryValues.telemetryStartTime -endTime  $telemetryValues.telemetryEndTime)
+
+    $htmlValues['htmlEndTime']=Get-Date
+
+    if ($consumerAccountList -eq $NULL)
+    {
+        $consumerAccountList = @()
+    }
+
+    generate-htmlFile -htmlTime $htmlValues -accounts $consumerAccountList
+
+    if ($allowTelemetryCollection -eq $TRUE)
+    {
+        $telemetryEventProperties = @{
+            AuditConsumerAccountsCommand = $telemetryValues.telemetryEventName
+            AuditConsumerAccountCommandVersion = $telemetryValues.telemetryAuditConsumerAccounts
+            MSGraphAuthentication = $telemetryValues.telemetryMSGraphAuthentication
+            MSGraphUsers = $telemetryValues.telemetryMSGraphUsers
+            MSGraphDirectory = $telemetryValues.telemetryMSGraptelemetryMSGraphDirectory
+            MSIdentityTools = $telemetryValues.telemetryMSIdentityTools
+            PSWriteHTML = $telemetryValues.telemetryHTML
+            TelemtryHelper = $telemetryValues.telemetryTelemetry
+            OSVersion = $telemetryValues.telemetryOSVersion
+            MigrationStartTimeUTC = $telemetryValues.telemetryStartTime
+            MigrationEndTimeUTC = $telemetryValues.telemetryEndTime
+        }
+
+        $telemetryEventMetrics = @{
+                MigrationElapsedSeconds = $telemetryValues.telemetryElapsedSeconds
+                NumberOfUsers = $telemetryValues.telemetryNumberOfUsers
+                NumberOfAddresses = $telemetryValues.telemetryNumberofAddresses
+                NumberOfConsumerAccounts = $telemetryValues.telemetryNumberOfConsumerAccounts
+                NumberOfConsumerAccountErrors = $telemetryValues.telemetryNumberOfConsumerAccountsErrors
+        }
+    }
+
+    if ($allowTelemetryCollection -eq $TRUE)
+    {
+        out-logfile -string "Telemetry1"
+        out-logfile -string $traceModuleName
+        out-logfile -string "Telemetry2"
+        out-logfile -string $telemetryValues.telemetryEventName
+        out-logfile -string "Telemetry3"
+        out-logfile -string $telemetryEventMetrics
+        out-logfile -string "Telemetry4"
+        out-logfile -string $telemetryEventProperties
+        send-TelemetryEvent -traceModuleName $traceModuleName -eventName $telemetryValues.telemetryEventName -eventMetrics $telemetryEventMetrics -eventProperties $telemetryEventProperties
+    }
+
+    disable-allPowerShellSessions
+}

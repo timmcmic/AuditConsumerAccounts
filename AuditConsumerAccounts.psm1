@@ -111,19 +111,49 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $false)]
         [boolean]$testPrimarySMTPOnly=$false,
         [Parameter(Mandatory = $false)]
+        $recursiveAddresses=$NULL,
+        [Parameter(Mandatory = $false)]
+        $recursiveDomains=$NULL,
+        [Parameter(Mandatory = $false)]
         [array]$bringYourOwnAddresses=@(),
         [Parameter(Mandatory = $false)]
-        [array]$bringYourOwnDomains=@()
+        [array]$bringYourOwnDomains=@(),
+        [Parameter(Mandatory = $false)]
+        $jobNumber = -1
     )
 
-    function GetAddresses
+    function CreateJob
     {
-        $htmlValues['htmlChunkUsers']=Get-Date
-        $htmlValues['htmlAddressesToTest']=Get-Date
-        out-logfile -string "Addresses are string type -> proceed."
-        $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly
+        $jobName = "AuditConsumerAccounts_"+$i.tostring()
 
-        return $addressesToTest
+        switch ($msGraphValues.msGraphAuthenticationType) 
+        {
+            $msGraphValues.msGraphCertificateAuth 
+            {  
+                out-logfile -string "Graph Certificate Jobs"
+
+                try {
+                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphCertificateThumbprint $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphCertificateThumbprint,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList -ErrorAction Stop
+
+                }
+                catch {
+                    out-logfile -string "Unable to start job."
+                    out-logfile -string $_ -isError:$true
+                }
+            }
+            $msGraphValues.msGraphClientSecretAuth 
+            {  
+                out-logfile -string "Graph Client Secret Auth"
+
+                try {
+                    Start-Job -name $jobName -initializationScript {import-module "AuditConsumerAccounts" -Force} -scriptBlock {start-AuditConsumerAccounts -logFolderPath $args[0] -msGraphEnvironmentName $args[1] -msGraphTenantID $args[2] -msGraphApplicationID $args[3] -msGraphClientSecret $args[4] -msGraphDomainPermissions $args[5] -msGraphUserPermissions $args[6] -jobNumber $args[7] -recursiveAddresses $args[8] -recursiveDomains $args[9]} -argumentList $logFolderPath,$msGraphEnvironmentName,$msGraphTenantID,$msGraphApplicationID,$msGraphClientSecret,$msGraphDomainPermissions,$msGraphUserPermissions,$i,$chunkList[$i],$domainsList -errorAction STOP
+                }
+                catch {
+                    out-logfile -string "Unable to start job."
+                    out-logfile -string $_ -isError:$true
+                }
+            }
+        }
     }
 
     #Initialize telemetry collection.
@@ -200,12 +230,23 @@ function Start-AuditConsumerAccounts
 
     #Set the execution windows name.
 
-    $windowTitle = "Start-AuditConsumerAccounts"
-    $host.ui.RawUI.WindowTitle = $windowTitle
+    if ($jobNumber -eq -1)
+    {
+        $windowTitle = "Start-AuditConsumerAccounts"
+        $host.ui.RawUI.WindowTitle = $windowTitle
+    }
 
     #Define global variables.
 
-    [string]$global:staticFolderName="\AuditConsumerAccounts\"
+    if ($jobNumber -eq -1)
+    {
+         [string]$global:staticFolderName="\AuditConsumerAccounts\"
+    }
+    else 
+    {
+         [string]$global:staticFolderName="\AuditConsumerAccounts\"+$jobNumber.toString()+"\"
+    }
+   
 
     #Define local variables.
 
@@ -214,6 +255,16 @@ function Start-AuditConsumerAccounts
     $domainsList
     $addressesToTest
     $consumerAccountList
+
+    $chunkList = @()
+    $chunkSize = 50
+    $addressChunkSize = 5000
+
+    $maxJobCount = 5
+    $maxAddressJobCount = 5
+
+    #$isDebug = $PSBoundParameters.ContainsKey('Debug') -and $PSBoundParameters['Debug']
+    $isDebug = $false
 
     #Start the log file.
 
@@ -228,190 +279,414 @@ function Start-AuditConsumerAccounts
 
     $htmlValues['htmlStartPowershellValidation']=Get-Date
 
-    $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
-    $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
-    $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
-    $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
-    $telemetryValues['telemetryAuditConsumerAccounts']=Test-PowerShellModule -powershellModuleName $powershellModules.AuditConsumerAccounts -powershellVersionTest:$TRUE
-    $telemetryValues['telemetryTelemetry']=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
-    $telemetryValues['telemetryHTML']=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE  
-
-    $htmlValues['htmlStartMSGraph']=Get-Date
-
-    out-logfile -string "Establish graph connection."
-
-    new-graphConnection -graphHashTable $msGraphValues
-
-    $htmlValues['htmlVerifyMSGraph']=Get-Date
-
-    verify-graphConnection -graphHashTable $msGraphValues
-
-    $htmlValues['ValidateAddressesProvided']=Get-Date
-
-    if ($bringYourOwnAddresses.count -gt 0)
+    if ($jobNumber -eq -1)
     {
-        out-logfile -string "Address validation required."
-        
-        $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
+        $telemetryValues['telemetryMSGraphAuthentication']=Test-PowershellModule -powershellModuleName $powershellModules.Authentication -powershellVersionTest:$TRUE
+        $telemetryValues['telemetryMSGraphUsers']=Test-PowershellModule -powershellModuleName $powershellModules.Users -powershellVersionTest:$TRUE
+        $telemetryValues['telemetryMSGraphDirectory']=Test-PowershellModule -powershellModuleName $powershellModules.Directory -powershellVersionTest:$TRUE
+        $telemetryValues['telemetryMSIdentityTools']=Test-PowershellModule -powershellModuleName $powershellModules.Identity -powershellVersionTest:$TRUE
+        $telemetryValues['telemetryAuditConsumerAccounts']=Test-PowerShellModule -powershellModuleName $powershellModules.AuditConsumerAccounts -powershellVersionTest:$TRUE
+        $telemetryValues['telemetryTelemetry']=Test-PowershellModule -powershellModuleName $powershellModules.telemetry -powershellVersionTest:$TRUE
+        $telemetryValues['telemetryHTML']=Test-PowershellModule -powershellModuleName $powershellModules.html -powershellVersionTest:$TRUE
     }
     else 
     {
-        out-logfile -string "Address validation not required."
-    }
-
-    $htmlValues['htmlGetMSGraphUsers']=Get-Date
-
-    if ($bringYourOwnAddresses.count -eq 0)
-    {
-        $userList = get-MSGraphUsers
-    }
-    else 
-    {
-        if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
-        {
-            out-logfile -string "Administrator has provided specific objects to test"
-            $userList = @()
-        }
-        else 
-        {
-            $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
-        }
-    }
-
-    if ($userList.count -gt 0)
-    {
-        out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
-    }
-    elseif (($userList.count -eq 0) -and ($bringYourOwnAddresses.count -eq 0)) 
-    {
-        out-logfile -string "No users were returned with the graph call created." -isError:$true
-    }
-
-    $htmlValues['htmlGetMSGraphDomains']=Get-Date
-
-    if($bringYourOwnDomains.count -eq 0)
-    {
-        $domainsList = get-msGraphDomains
-    }
-    else 
-    {
-        $domainsList = get-msGraphDomains -bringYourOwnDomains $bringYourOwnDomains
+        $telemetryValues['telemetryMSGraphAuthentication']="None"
+        $telemetryValues['telemetryMSGraphUsers']="None"
+        $telemetryValues['telemetryMSGraphDirectory']="None"
+        $telemetryValues['telemetryMSIdentityTools']="None"
+        $telemetryValues['telemetryAuditConsumerAccounts']="None"
+        $telemetryValues['telemetryTelemetry']="None"
+        $telemetryValues['telemetryHTML']="None"
     }
     
-    if ($domainsList.count -gt 0)
+    if ($recursiveAddresses -eq $NULL)
     {
-        out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
-    }
-    else 
-    {
-        out-logfile -string "No domains were returned with the graph call created." -isError:$TRUE  
-    }
+        $htmlValues['htmlStartMSGraph']=Get-Date
 
-    if ($bringYourOwnAddresses.count -gt 0)
-    {
-        if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
+        out-logfile -string "Establish graph connection."
+
+        new-graphConnection -graphHashTable $msGraphValues
+
+        $htmlValues['htmlVerifyMSGraph']=Get-Date
+
+        verify-graphConnection -graphHashTable $msGraphValues
+
+        $htmlValues['ValidateAddressesProvided']=Get-Date
+
+        if ($bringYourOwnAddresses.count -gt 0)
         {
-            out-logfile -string "Addresses are object type -> proceed."
-            $htmlValues['htmlChunkUsers']=Get-Date
-            $htmlValues['htmlAddressesToTest']=Get-Date
-            $addressesToTest = $bringYourOwnAddresses
+            out-logfile -string "Address validation required."
+            
+            $bringYourOwnAddresses = @(verify-AddressesProvided -addressList $bringYourOwnAddresses)
         }
         else 
         {
-            out-logfile -string 'Addresses are not imported objects -> get addresses'
-            $addressesToTest = GetAddresses
+            out-logfile -string "Address validation not required."
         }
+
+        $htmlValues['htmlGetMSGraphUsers']=Get-Date
+
+        if ($bringYourOwnAddresses.count -eq 0)
+        {
+            $userList = @(get-MSGraphUsers)
+
+            if ($userList.count -eq 0)
+            {
+                out-logfile -string "No users were returned by graph." -isError:$TRUE
+            }
+        }
+        else 
+        {
+            if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
+            {
+                out-logfile -string "Administrator has provided specific objects to test"
+                $userList = @()
+            }
+            else 
+            {
+                $userList = get-MSGraphUsers -bringYourOwnAddresses $bringYourOwnAddresses
+            }
+        }
+
+        if ($userList.count -gt 0)
+        {
+            out-xmlFile -itemToExport $userList -itemNameToExport $exportNames.usersXML
+        }
+
+        $htmlValues['htmlGetMSGraphDomains']=Get-Date
+
+        if($bringYourOwnDomains.count -eq 0)
+        {
+            $domainsList = get-msGraphDomains
+        }
+        else 
+        {
+            $domainsList = get-msGraphDomains -bringYourOwnDomains $bringYourOwnDomains
+        }
+        
+        if ($domainsList.count -gt 0)
+        {
+            out-CSVFile -itemToExport $domainsList -itemNameToExport $exportNames.domainsCSV
+        }
+        else 
+        {
+            out-logfile -string "No domains were returned with the graph call created." -isError:$TRUE  
+        }
+
+        $htmlValues['htmlChunkUsers']=Get-Date
+
+        if (($userList.count -ge $chunkSize) -or ($bringYourOwnAddresses.count -ge $chunkSize))
+        {
+            if ($bringYourOwnAddresses[0] -is [PSCustomObject])
+            {
+                $htmlValues['htmlAddressesToTest']=Get-Date
+                $addressesToTest = $bringYourOwnAddresses
+                $bringYourOwnAddresses = $null
+            }
+            else 
+            {
+                out-logfile -string 'None debug - use standard processing.'
+
+                $htmlValues['htmlChunkUsers']=Get-Date
+                $htmlValues['htmlAddressesToTest']=Get-Date
+
+                out-logfile -string "Obtaining the addresses to test."
+
+                $addressesToTest = get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly -isBulk:$true
+                
+                $chunkList = $null
+
+                start-garbageCollect
+
+                $returnListCount = $addressesToTest.Count
+
+                out-logfile -string "Sort and unique the return list."
+
+                $addressesToTest = $addressesToTest | Sort-Object -Property ID,Address -Unique
+
+                $returnListCountSorted = $addressesToTest.count
+
+                out-logfile -string ("Count of Users Evaluated: "+$userList.count.toString())
+                out-logfile -string ("Count of Total Address Combinations: "+$returnListCount.ToString())
+                out-logfile -string ("Count of Total Sorted Address Combinations: "+$returnListCountSorted.ToString())
+            }
+        }
+        elseif (($userList.count -lt $chunkSize) -or ($bringYourOwnAddresses.count -lt $chunkSize)) 
+        {
+            out-logfile -string "Addresses or user count < chunk size - do nothing."
+            if ($bringYourOwnAddresses[0].gettype().fullName -eq "System.Management.Automation.PSCustomObject")
+            {
+                out-logfile -string "Addresses are object type -> proceed."
+                $htmlValues['htmlChunkUsers']=Get-Date
+                $htmlValues['htmlAddressesToTest']=Get-Date
+                $addressesToTest = $bringYourOwnAddresses
+            }
+            else 
+            {
+                $htmlValues['htmlChunkUsers']=Get-Date
+                $htmlValues['htmlAddressesToTest']=Get-Date
+                out-logfile -string "Addresses are string type -> proceed."
+                $addressesToTest = @(get-AddressesToTest -userList $userList -domainsList $domainsList -testPrimarySMTPOnly $testPrimarySMTPOnly)
+            }
+        }
+        
+        if ($addressesToTest.count -gt 0)
+        {
+            out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
+        }
+
+        $htmlValues['htmlChunkAccounts']=Get-Date
+
+        if ($addressesToTest.count -gt $chunkSize)
+        {
+            out-logfile -string "Number of addresses to test > chunk size -> chunk the addresses."
+
+            $chunkList = get-chunkList -userBatchSize $chunkSize -listToChunk $addressesToTest
+
+            out-logfile -string "Completed chunking list."
+        }
+        else 
+        {
+            out-logfile -string "Number of addresses to test < chunk size -> proceed with standard testing."
+        }
+
+        $htmlValues['htmlConsumerAccountTest']=Get-Date
+
+        if (($chunkList.count -gt 0) -and (($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphCertificateAuth ) -or ($msGraphValues.msGraphAuthenticationType -eq $msGraphValues.msGraphClientSecretAuth)))
+        {
+            $telemetryValues.telemetryNumberofAddresses=[double]$addressesToTest.count
+            $addressesToTest = $null
+            $jobCounter = 0
+            $jobsCompleted = 0
+            $totalElapsedTime = 0
+
+            start-garbageCollect
+
+            out-logfile -string "The number of users required chunking - start jobs to process groups of users."
+
+            $jobsCompleted = 0
+
+            if ($chunkList.count -lt $maxJobCount)
+            {
+                out-logfile -string "Number of chunks less than jobs to create."
+                $maxJobCount = $chunkList.count - 1
+            }
+            else 
+            {
+                out-logfile -string "Max job counter greater than chunk list - proceed."    
+            }
+            
+            for ($i = 0 ; $i -lt $chunkList.count ; $i++)
+            {
+                $start = Get-Date
+
+                if ($i -lt $maxJobCount)
+                {
+                    out-logfile -string "Provision the first 5 jobs."
+
+                    CreateJob
+                }
+                else 
+                {
+                    out-logfile -string "Sleep and provision new jobs as a job completes."
+
+                    if ($i+1 -ne $chunkList.count)
+                    {
+                        while ((Get-Job -state Running).count -ge $maxJobCount)
+                        {
+                            out-logfile -string "Max jobs currently in progress - waiting to start next job."
+
+                            $jobs = Get-Job -state Running
+
+                            foreach ($job in $jobs)
+                            {
+                                out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                            }
+
+                            Get-Job | Wait-Job -Any | Out-Null
+                        }
+
+                        Remove-CompletedJobs
+
+                        out-logfile -string "Provision next job..."
+
+                        CreateJob
+
+                        $jobsCompleted++
+                    }
+                    else
+                    {
+                        while ((Get-Job -State Running).count -eq $maxJobCount)
+                        {
+                            start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until time to create final job..."
+
+                            $jobs = Get-Job -state Running
+
+                            foreach ($job in $jobs)
+                            {
+                                out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                            }
+                        }
+
+                        out-logfile -string "Provision final job..."
+
+                        CreateJob
+        
+                        out-logfile -string "Final jobs currently in progress - waiting to start next job."
+
+                        $jobs = Get-Job -state Running
+
+                        foreach ($job in $jobs)
+                        {
+                            out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                        }
+
+                        while ((Get-Job -State Running).count -ne 0)
+                        {
+                            start-sleepProgress -sleepSeconds 30 -sleepString "Sleeping until final jobs finish..."
+
+                            $jobs = Get-Job -state Running
+
+                            foreach ($job in $jobs)
+                            {
+                                out-logfile -string ("Job Name: "+$job.name+" Job Status: "+$job.state)
+                            }
+                        }
+                    }
+
+                    $jobCounter = $chunkList.Count
+                }
+
+                $end = Get-Date
+                $time = ($end - $start).TotalMinutes
+                $totalElapsedTime = $totalElapsedTime + $time
+                $averageTime = $totalElapsedTime / $jobsCompleted
+                $jobStatusPending = $chunkList.count - $jobsCompleted
+
+                out-logfile -string ("Jobs Completed: "+$jobsCompleted.tostring())
+                out-logfile -string ("All Pending Job Count: "+$jobStatusPending.tostring())
+                out-logfile -string ("Time Elapsed Processing Jobs in Minutes: "+$totalElapsedTime)
+                out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
+            }
+
+            out-logfile -string ("Total Time Processing Jobs: "+$totalElapsedTime)
+            out-logfile -string ("Average Job Time in Minutes: "+$averageTime)
+
+            out-logfile -string "Collect all log files from the associated jobs."
+
+            get-multipleLogFiles -logFolderPath $logFolderPath -baseName $logFileName -fileName $logFileName
+
+            out-logfile -string "All log files successfully appeded to current log."
+
+            out-logfile -string "Gather all XML files for consumer accounts."
+
+            $consumerAccountList = get-MultipleXMLFiles -fileName $exportNames.consumerAccountsXML -baseName $logFileName -logFolderPath $logFolderPath
+
+            if ($consumerAccountList.count -gt 0)
+            {
+                out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+                out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+            }
+
+            remove-jobFiles -logFolderPath $logFolderPath -baseName $logFileName
+
+            remove-jobDirectories -logFolderPath $logFolderPath -baseName $logFileName
+
+            remove-completedJobs -removeAll $TRUE
+        }
+        else 
+        {
+            out-logfile -string "Addresses provided - proceed with consumer testing."
+
+            $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
+
+            $addressesToTest = $null
+        }
+
+        if ($consumerAccountList.count -gt 0)
+        {
+            out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+            out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+        }
+
+        if (($consumerAccountList | where {$_.accountError -eq $TRUE}).count -gt 0)
+        {
+            out-xmlFile -itemToExport ($consumerAccountList | where {$_.accountError -eq $TRUE}) -itemNameToExport $exportNames.consumerAccountsErrorsXML
+        }
+
+        $telemetryValues.telemetryNumberOfUsers=[double]$userList.count
+        $telemetryValues.telemetryNumberOfConsumerAccounts=[double](@($consumerAccountList | where {$_.accountError -eq $false}).count)
+        $telemetryValues.telemetryNumberOfConsumerAccountsErrors=[double](@($consumerAccountList | where {$_.accountError -eq $true}).count)
+        $telemetryValues.telemetryEndTime=(Get-UniversalDateTime)
+        $telemetryValues.telemetryElapsedSeconds=[double](Get-ElapsedTime -startTime $telemetryValues.telemetryStartTime -endTime  $telemetryValues.telemetryEndTime)
+
+        $htmlValues['htmlEndTime']=Get-Date
+
+        if ($consumerAccountList -eq $NULL)
+        {
+            $consumerAccountList = @()
+        }
+
+        generate-htmlFile -htmlTime $htmlValues -accounts $consumerAccountList
+
+        if ($allowTelemetryCollection -eq $TRUE)
+        {
+            $telemetryEventProperties = @{
+                AuditConsumerAccountsCommand = $telemetryValues.telemetryEventName
+                AuditConsumerAccountCommandVersion = $telemetryValues.telemetryAuditConsumerAccounts
+                MSGraphAuthentication = $telemetryValues.telemetryMSGraphAuthentication
+                MSGraphUsers = $telemetryValues.telemetryMSGraphUsers
+                MSGraphDirectory = $telemetryValues.telemetryMSGraptelemetryMSGraphDirectory
+                MSIdentityTools = $telemetryValues.telemetryMSIdentityTools
+                PSWriteHTML = $telemetryValues.telemetryHTML
+                TelemtryHelper = $telemetryValues.telemetryTelemetry
+                OSVersion = $telemetryValues.telemetryOSVersion
+                MigrationStartTimeUTC = $telemetryValues.telemetryStartTime
+                MigrationEndTimeUTC = $telemetryValues.telemetryEndTime
+            }
+
+            $telemetryEventMetrics = @{
+                    MigrationElapsedSeconds = $telemetryValues.telemetryElapsedSeconds
+                    NumberOfUsers = $telemetryValues.telemetryNumberOfUsers
+                    NumberOfAddresses = $telemetryValues.telemetryNumberofAddresses
+                    NumberOfConsumerAccounts = $telemetryValues.telemetryNumberOfConsumerAccounts
+                    NumberOfConsumerAccountErrors = $telemetryValues.telemetryNumberOfConsumerAccountsErrors
+            }
+        }
+
+        if ($allowTelemetryCollection -eq $TRUE)
+        {
+            out-logfile -string "Telemetry1"
+            out-logfile -string $traceModuleName
+            out-logfile -string "Telemetry2"
+            out-logfile -string $telemetryValues.telemetryEventName
+            out-logfile -string "Telemetry3"
+            out-logfile -string $telemetryEventMetrics
+            out-logfile -string "Telemetry4"
+            out-logfile -string $telemetryEventProperties
+            send-TelemetryEvent -traceModuleName $traceModuleName -eventName $telemetryValues.telemetryEventName -eventMetrics $telemetryEventMetrics -eventProperties $telemetryEventProperties
+        }
+
+        disable-allPowerShellSessions
     }
     else 
-    {
-        out-logfile -string 'Get addresses for user objects...'
-        $addressesToTest = GetAddresses
-    }
+    {   
+        out-logfile -string "Starting account testing based off provided domains and data."
 
-    $telemetryValues.telemetryNumberOfUsers=[double]$userList.count
-    $userList = $null
-    $domainsList = $NULL
+        $consumerAccountList = get-ConsumerAccounts -accountList $recursiveAddresses
 
-    if ($addressesToTest.count -gt 0)
-    {
-        out-xmlFile -itemToExport $addressesToTest -itemNameToExport $exportNames.addressesToTextXML
-    }
-    else
-    {
-        out-logfile -string "No addresses were returned for evaluation." -isError:$true
-    }
-
-    $htmlValues['htmlConsumerAccountTest']=Get-Date
-
-    $consumerAccountList = get-ConsumerAccounts -accountList $addressesToTest
-    $telemetryValues.telemetryNumberOfConsumerAccounts=[double](@($consumerAccountList | where {$_.accountError -eq $false}).count)
-    $telemetryValues.telemetryNumberOfConsumerAccountsErrors=[double](@($consumerAccountList | where {$_.accountError -eq $true}).count)
-
-    $telemetryValues.telemetryNumberofAddresses=[double]$addressesToTest.count
-    $addressesToTest = $null
-
-    if ($consumerAccountList.count -gt 0)
-    {
-        out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
-        out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
-    }
-
-    if (($consumerAccountList | where {$_.accountError -eq $TRUE}).count -gt 0)
-    {
-        out-xmlFile -itemToExport ($consumerAccountList | where {$_.accountError -eq $TRUE}) -itemNameToExport $exportNames.consumerAccountsErrorsXML
-    }
-
-        
-       
-    $telemetryValues.telemetryEndTime=(Get-UniversalDateTime)
-    $telemetryValues.telemetryElapsedSeconds=[double](Get-ElapsedTime -startTime $telemetryValues.telemetryStartTime -endTime  $telemetryValues.telemetryEndTime)
-
-    $htmlValues['htmlEndTime']=Get-Date
-
-    if ($consumerAccountList -eq $NULL)
-    {
-        $consumerAccountList = @()
-    }
-
-    generate-htmlFile -htmlTime $htmlValues -accounts $consumerAccountList
-
-    if ($allowTelemetryCollection -eq $TRUE)
-    {
-        $telemetryEventProperties = @{
-            AuditConsumerAccountsCommand = $telemetryValues.telemetryEventName
-            AuditConsumerAccountCommandVersion = $telemetryValues.telemetryAuditConsumerAccounts
-            MSGraphAuthentication = $telemetryValues.telemetryMSGraphAuthentication
-            MSGraphUsers = $telemetryValues.telemetryMSGraphUsers
-            MSGraphDirectory = $telemetryValues.telemetryMSGraptelemetryMSGraphDirectory
-            MSIdentityTools = $telemetryValues.telemetryMSIdentityTools
-            PSWriteHTML = $telemetryValues.telemetryHTML
-            TelemtryHelper = $telemetryValues.telemetryTelemetry
-            OSVersion = $telemetryValues.telemetryOSVersion
-            MigrationStartTimeUTC = $telemetryValues.telemetryStartTime
-            MigrationEndTimeUTC = $telemetryValues.telemetryEndTime
+        if ($consumerAccountList.count -gt 0)
+        {
+            out-xmlFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
+            out-CSVFile -itemToExport $consumerAccountList -itemNameToExport $exportNames.consumerAccountsXML
         }
 
-        $telemetryEventMetrics = @{
-                MigrationElapsedSeconds = $telemetryValues.telemetryElapsedSeconds
-                NumberOfUsers = $telemetryValues.telemetryNumberOfUsers
-                NumberOfAddresses = $telemetryValues.telemetryNumberofAddresses
-                NumberOfConsumerAccounts = $telemetryValues.telemetryNumberOfConsumerAccounts
-                NumberOfConsumerAccountErrors = $telemetryValues.telemetryNumberOfConsumerAccountsErrors
-        }
-    }
+        $consumerAccountList = $null
 
-    if ($allowTelemetryCollection -eq $TRUE)
-    {
-        out-logfile -string "Telemetry1"
-        out-logfile -string $traceModuleName
-        out-logfile -string "Telemetry2"
-        out-logfile -string $telemetryValues.telemetryEventName
-        out-logfile -string "Telemetry3"
-        out-logfile -string $telemetryEventMetrics
-        out-logfile -string "Telemetry4"
-        out-logfile -string $telemetryEventProperties
-        send-TelemetryEvent -traceModuleName $traceModuleName -eventName $telemetryValues.telemetryEventName -eventMetrics $telemetryEventMetrics -eventProperties $telemetryEventProperties
-    }
+        out-logfile -string 'Executing random throttling value between 5 and 10 minutes.'
 
-    disable-allPowerShellSessions
+        start-sleep -seconds ((Get-Random -Minimum 5 -Maximum 10)*60)
+        #start-sleep -seconds ((Get-Random -Minimum 1 -Maximum 2)*60)
+    }
 }
