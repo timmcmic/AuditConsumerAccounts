@@ -17,43 +17,23 @@ function get-ConsumerAccounts
 
     $ProgressDelta = 100/($accountList.count); $PercentComplete = 0; $MbxNumber = 0
 
-    $counter = $accountList.count
-    $totalTime = 0
-    $longThrottle = 0
-    $totalElapsedTime = 0
-    
     foreach ($account in $accountList)
     {
-        $start = Get-Date
+        $MbxNumber++
+
         out-logfile -string ("Testing consumer account for: "+$account.address)
 
-        write-progress -activity "Processing Recipient" -status $account.UPN -PercentComplete $PercentComplete -id 1
+        write-progress -activity "Processing Recipient" -status $account.UPN -PercentComplete $PercentComplete
 
         $PercentComplete += $ProgressDelta
 
         $account = Get-MSIDReliableStatus -outputObject $account -errorAction STOP
 
-        if ($account.accountError -eq $TRUE)
-        {
-            $longThrottle++
-            start-sleepProgress -sleepSeconds ((Get-Random -Minimum 5 -Maximum 10)*60) -sleepString "Last request throttled - sleeping random 5 - 10 min" -sleepParentID 1 -sleepID 2
-        }
-
         out-logfile -string "Successfully tested for consumer account."
 
         $returnList.add($account)
 
-        $counter--
-        out-logfile -string ("Accounts Remaining: "+$counter.tostring())
-
-        start-sleepProgress -sleepSeconds (get-Random -minimum 2 -maximum 5) -sleepString "Stadard sleep after each call..." -sleepParentID 1 -sleepID 2
-        $end = Get-Date
-        $time = ($end - $start).TotalMinutes
-        $totalElapsedTime = $totalElapsedTime + $time
-        $averageTime = $totalElapsedTime / ($accountList.count - $counter)
-        out-logfile -string ("Total elapsed time: "+$totalElapsedTime)
-        out-logfile -string ("Average account processing time: "+$averageTime)
-        out-logfile -string ("Number of long throttle operations: "+$longThrottle.tostring())
+        Start-Sleep -s 1
     }
 
     write-progress -activity "Processing Recipient" -completed
@@ -62,10 +42,6 @@ function get-ConsumerAccounts
 
     out-logfile -string ("Count of consumer accounts located: "+($returnList | where {$_.AccountPresent -eq $true}).Count)
     out-logfile -string ("Count of account test failures: "+($returnList | where {$_.AccountError -eq $true}).Count)
-
-   
-
-    out-logfile -string ("Total evaluation time in mintues: "+$totalTime.tostring())
 
     out-logfile -string "End Get-ConsumerAccounts"
 

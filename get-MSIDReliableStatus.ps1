@@ -38,22 +38,33 @@ function Get-MsIdReliableStatus {
     {
         out-logfile -string $data.IsMicrosoftAccountSet
         out-logfile -string $data.MicrosoftAccount
-        if ($data.MicrosoftAccount -eq 0) { $status = $true }
-        elseif ($data.MicrosoftAccount -eq 1) { $status = $false }
+        if ($data.MicrosoftAccount -eq 0) 
+        { 
+            $status = $true
+            $outputObject.requestResult = "0" 
+        }
+        elseif ($data.MicrosoftAccount -eq 1) 
+        { 
+            $status = $false
+            $outputObject.requestResult = "1" 
+        }
         elseif ($data.MicrosoftAccount -eq 2) 
         { 
             $outputObject.AccountError = $true
-            $outputObject.AccountErrorText = "Validation request throttled by service." 
+            $outputObject.AccountErrorText = "Validation request throttled by service."
+            $outputObject.requestResult = "2" 
         }
         elseif ($data.MicrosoftAccount -eq 4) 
         { 
             $outputObject.AccountError = $true
             $outputObject.AccountErrorText = "ESTS unknown service failure." 
+            $outputObject.requestResult = "4"
         }
         else 
         {
             $outputObject.AccountError = $true
-            $outputObject.AccountErrorText = "Unknown error - search logs for any clues." 
+            $outputObject.AccountErrorText = "Unknown error - search logs for any clues."
+            $outputObject.requestResult = "ERROR"
         }
     }
 
