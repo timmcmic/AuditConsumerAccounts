@@ -77,11 +77,11 @@ function New-GraphConnection
             out-logfile -string "Setting graph preferences to disable wam."
 
             try {
-                Set-MgGraphOption -DisableLoginByWAM $true .\AuditConsumerAccounts-ErrorAction STOP
+                Set-MgGraphOption -DisableLoginByWAM $true -ErrorAction STOP
             }
             catch {
                 out-logfile -string $_ 
-                out-logflie -string "Unable to set ms graph options to disable WAM." -isError:$TRUE
+                out-logfile -string "Unable to set ms graph options to disable WAM." -isError:$TRUE
             }
 
             out-logfile -string "Connecting to Microsoft Graph using app ID no WAM."
@@ -92,16 +92,6 @@ function New-GraphConnection
             catch {
                 out-logfile -string $_
                 out-logfile -string "Graph authentication failed."
-            }
-
-            out-logfile -string "Resetting WAM options."
-
-            try {
-                Set-MgGraphOption -DisableLoginByWAM $false -ErrorAction STOP
-            }
-            catch {
-                out-logfile -string $_ 
-                out-logflie -string "Unable to set ms graph options to disable WAM." -isError:$TRUE
             }
         }
         Default 
