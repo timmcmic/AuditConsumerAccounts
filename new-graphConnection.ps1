@@ -11,6 +11,7 @@ function New-GraphConnection
     $msGraphInteractive = "Interactive"
     $msGraphCertificate = "Certificate"
     $msGraphClientSecret = "ClientSecret"
+    $msGraphNoWam = "NoWam"
     $msGraphScopesRequired = $graphHashTable.msGraphDomainPermissions + "," + $graphHashTable.msGraphUserPermissions
 
     out-logfile -string "Begin New-GraphConnection"
@@ -67,6 +68,40 @@ function New-GraphConnection
             catch {
                 out-logfile -string "Graph authentication failed."
                 out-logfile -string $_ -isError:$TRUE
+            }
+        }
+        $msGraphNoWam
+        {
+            out-logfile -string "Entering no WAM authentication."
+
+            out-logfile -string "Setting graph preferences to disable wam."
+
+            try {
+                Set-MgGraphOption -DisableLoginByWAM $true .\AuditConsumerAccounts-ErrorAction STOP
+            }
+            catch {
+                out-logfile -string $_ 
+                out-logflie -string "Unable to set ms graph options to disable WAM." -isError:$TRUE
+            }
+
+            out-logfile -string "Connecting to Microsoft Graph using app ID no WAM."
+
+            try {
+                connect-mgGraph -tenantID $graphHashTable.msGraphTenantID -ClientId $graphHashTable.msGraphApplicationID -Environment $graphHashTable.msGraphEnvironmentName -errorAction Stop
+            }
+            catch {
+                out-logfile -string $_
+                out-logfile -string "Graph authentication failed."
+            }
+
+            out-logfile -string "Resetting WAM options."
+
+            try {
+                Set-MgGraphOption -DisableLoginByWAM $false -ErrorAction STOP
+            }
+            catch {
+                out-logfile -string $_ 
+                out-logflie -string "Unable to set ms graph options to disable WAM." -isError:$TRUE
             }
         }
         Default 

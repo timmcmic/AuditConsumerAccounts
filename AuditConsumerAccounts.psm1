@@ -78,27 +78,32 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
         [ValidateSet("China","Global","USGov","USGovDod")]
         [string]$msGraphEnvironmentName,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
         [string]$msGraphTenantID,
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [string]$msGraphCertificateThumbprint,
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
         [string]$msGraphApplicationID,
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]        
         [string]$msGraphClientSecret,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
         [ValidateSet("Domain.Read.All","Domain.ReadWrite.All")]        
         [string]$msGraphDomainPermissions,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
+        [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
         [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
         [string]$msGraphUserPermissions,
         [Parameter(Mandatory = $false)]
