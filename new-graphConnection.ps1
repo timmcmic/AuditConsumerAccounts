@@ -12,6 +12,7 @@ function New-GraphConnection
     $msGraphCertificate = "Certificate"
     $msGraphClientSecret = "ClientSecret"
     $msGraphNoWam = "NoWam"
+    $msGraphDeviceCodeFlow = "DeviceCodeFlow"
     $msGraphScopesRequired = $graphHashTable.msGraphDomainPermissions + "," + $graphHashTable.msGraphUserPermissions
 
     out-logfile -string "Begin New-GraphConnection"
@@ -88,6 +89,18 @@ function New-GraphConnection
 
             try {
                 connect-mgGraph -tenantID $graphHashTable.msGraphTenantID -ClientId $graphHashTable.msGraphApplicationID -Environment $graphHashTable.msGraphEnvironmentName -errorAction Stop
+            }
+            catch {
+                out-logfile -string $_
+                out-logfile -string "Graph authentication failed."
+            }
+        }
+        $msGraphDeviceCodeFlow
+        {
+            out-logfile -string "Connecting to Microsoft Graph using device code flow."
+
+            try {
+                connect-mgGraph -tenantID $graphHashTable.msGraphTenantID -ClientId $graphHashTable.msGraphApplicationID -Environment $graphHashTable.msGraphEnvironmentName -deviceCode -errorAction Stop
             }
             catch {
                 out-logfile -string $_

@@ -79,12 +79,14 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
+        [Parameter(Mandatory = $true, ParameterSetName = "DeviceCodeFlow")]
         [ValidateSet("China","Global","USGov","USGovDod")]
         [string]$msGraphEnvironmentName,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
+        [Parameter(Mandatory = $true, ParameterSetName = "DeviceCodeFlow")]
         [string]$msGraphTenantID,
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [string]$msGraphCertificateThumbprint,
@@ -98,14 +100,19 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
+        [Parameter(Mandatory = $true, ParameterSetName = "DeviceCodeFlow")]
         [ValidateSet("Domain.Read.All","Domain.ReadWrite.All")]        
         [string]$msGraphDomainPermissions,
         [Parameter(Mandatory = $true, ParameterSetName = "Interactive")]
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
+        [Parameter(Mandatory = $true, ParameterSetName = "DeviceCodeFlow")]
         [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
         [string]$msGraphUserPermissions,
+        [Parameter(Mandatory = $true, ParameterSetName = "DeviceCodeFlow")]
+        [Parameter(Mandatory = $true)]
+        [boolean]$msGraphDeviceCodeFlow,
         [Parameter(Mandatory = $false)]
         $msGraphRecipientFilter="None",
         #Define other mandatory parameters
