@@ -112,7 +112,6 @@ function Start-AuditConsumerAccounts
         [ValidateSet("User.Read.All","User.ReadWrite.All","Directory.Read.All","Directory.ReadWrite.All")]        
         [string]$msGraphUserPermissions,
         [Parameter(Mandatory = $true, ParameterSetName = "DeviceCodeFlow")]
-        [Parameter(Mandatory = $true)]
         [boolean]$msGraphDeviceCodeFlow,
         [Parameter(Mandatory = $false)]
         $msGraphRecipientFilter="None",
