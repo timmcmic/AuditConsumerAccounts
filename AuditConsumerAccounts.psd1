@@ -12,7 +12,7 @@
 RootModule = '.\AuditConsumerAccounts.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.217'
+ModuleVersion = '1.0.218'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()

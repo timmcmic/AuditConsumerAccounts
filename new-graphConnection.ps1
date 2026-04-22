@@ -92,7 +92,7 @@ function New-GraphConnection
             }
             catch {
                 out-logfile -string $_
-                out-logfile -string "Graph authentication failed."
+                out-logfile -string "Graph authentication failed." -isError:$TRUE
             }
         }
         $msGraphDeviceCodeFlow
@@ -104,7 +104,7 @@ function New-GraphConnection
             }
             catch {
                 out-logfile -string $_
-                out-logfile -string "Graph authentication failed."
+                out-logfile -string "Graph authentication failed." -isError:$TRUE
             }
         }
         Default 

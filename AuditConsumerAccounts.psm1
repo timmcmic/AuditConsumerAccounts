@@ -93,6 +93,7 @@ function Start-AuditConsumerAccounts
         [Parameter(Mandatory = $true, ParameterSetName = "Certificate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]
         [Parameter(Mandatory = $true, ParameterSetName = "NoWam")]
+        [Parameter(Mandatory = $true, ParameterSetName = "DeviceCodeFlow")]
         [string]$msGraphApplicationID,
         [Parameter(Mandatory = $true, ParameterSetName = "ClientSecret")]        
         [string]$msGraphClientSecret,

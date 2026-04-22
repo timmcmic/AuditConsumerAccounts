@@ -22,8 +22,6 @@ function get-MultipleLogFiles
 
     out-logfile -string ("File Count: "+$files.count.tostring())
 
-    <#
-
     for ($i = 0 ; $i -lt $files.count ; $i++)
     {
         out-logfile -string ("Processing file: "+$files[$i])
@@ -59,8 +57,6 @@ function get-MultipleLogFiles
             out-logfile -string $_ -isError:$TRUE
         }
     }
-
-    #>
         
     out-logfile -string "End Get-MultipleLogFiles"
 }
