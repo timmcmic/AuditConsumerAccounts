@@ -39,22 +39,22 @@ function get-MultipleLogFiles
                 out-logfile -string "Unable to obtain the log file contents."
                 out-logfile -string $_ -isError:$TRUE
             }
+
+            out-logfile -string "---------------------------------------------------------------"
+            out-logfile -string ("Job Log for Job: "+$i.tostring())
+            out-logfile -string "---------------------------------------------------------------"
+
+            try {
+                $data | Out-File -FilePath $global:LogFile -Append -ErrorAction STOP
+            }
+            catch {
+                out-logfile -string "Unable to append job logs to the main log file."
+                out-logfile -string $_ -isError:$TRUE
+            }
         }
         else 
         {
             out-logfile -string "Main log file - skip"
-        }
-
-        out-logfile -string "---------------------------------------------------------------"
-        out-logfile -string ("Job Log for Job: "+$i.tostring())
-        out-logfile -string "---------------------------------------------------------------"
-
-        try {
-            $data | Out-File -FilePath $global:LogFile -Append -ErrorAction STOP
-        }
-        catch {
-            out-logfile -string "Unable to append job logs to the main log file."
-            out-logfile -string $_ -isError:$TRUE
         }
     }
         
