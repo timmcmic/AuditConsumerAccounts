@@ -427,6 +427,7 @@ function Start-AuditConsumerAccounts
         else 
         {
             out-logfile -string "Number of addresses to test < chunk size -> proceed with standard testing."
+            $chunkList = @()
         }
 
         $htmlValues['htmlConsumerAccountTest']=Get-Date
