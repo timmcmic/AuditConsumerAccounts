@@ -416,7 +416,7 @@ function Start-AuditConsumerAccounts
 
         $htmlValues['htmlChunkAccounts']=Get-Date
 
-        if ($addressesToTest.count -gt $chunkSize)
+        if (($addressesToTest.count -gt $chunkSize) -and ($msGraphValues.msGraphAuthenticationType -ne $msGraphValues.msGraphInteractiveAuth))
         {
             out-logfile -string "Number of addresses to test > chunk size -> chunk the addresses."
 
